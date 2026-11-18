@@ -1,0 +1,59 @@
+---
+import Base from '../../layouts/Base.astro';
+import EntityCard from '../../components/EntityCard.astro';
+import { all, regionOf, regionList } from '../../lib/regions';
+
+const realms = all.filter((e) => e.type === 'realm').sort((a, b) => b.citedBy - a.citedBy);
+const ungrouped = all.filter((e) => (e.type === 'place') && !regionOf(e)).length;
+const totalPlaces = all.filter((e) => e.type === 'place' || e.type === 'realm').length;
+---
+<Base title="地理" description={`按地区层级浏览中洲的 ${totalPlaces} 个地点与势力。数据没有可靠坐标，因此不提供虚构地图。`}>
+  <section class="wrap" style="padding-top:clamp(2rem,4vw,3rem)">
+    <div class="eyebrow">Geography</div>
+    <h1 style="font-size:clamp(2rem,4vw,3rem);margin-top:.5rem">地理</h1>
+    <p class="lede" style="margin-top:.8rem">
+      数据库里没有可信的经纬度，所以这里不做一张“看起来像地图”的示意图。
+      取而代之的是按原站分类整理出的地区层级：从地区进入，逐层看到城市、山川与道路。
+    </p>
+    <div class="hero-stats" style="margin-top:1.6rem">
+      <div class="hero-stat"><strong>{totalPlaces}</strong><span>地点与势力</span></div>
+      <div class="hero-stat"><strong>{regionList.length}</strong><span>可归类的地区</span></div>
+      <div class="hero-stat"><strong>{ungrouped}</strong><span>未归类地点</span></div>
+    </div>
+  </section>
+
+  <section class="section wrap" style="padding-top:1rem">
+    <div class="section-head">
+      <div>
+        <div class="eyebrow">Regions</div>
+        <h2 style="font-size:1.6rem">按地区浏览</h2>
+        <p>每个地区页列出原站归入该地区的全部地点。</p>
+      </div>
+    </div>
+    <div class="region-grid">
+      {regionList.map((r) => (
+        <a class="region-card" href={`/atlas/${encodeURIComponent(r.name)}/`}>
+          <h3>{r.name} <span>{r.count} 处</span></h3>
+          <p>
+            {r.list.slice(0, 5).map((x: any) => x.title).join('、')}
+            {r.list.length > 5 ? ' 等' : ''}
+          </p>
+        </a>
+      ))}
+    </div>
+  </section>
+
+  <section class="section wrap" style="padding-top:0">
+    <div class="section-head">
+      <div>
+        <div class="eyebrow">Powers</div>
+        <h2 style="font-size:1.6rem">王国与势力</h2>
+        <p>从分类识别出的 {realms.length} 个王国、帝国与领地。</p>
+      </div>
+      <a class="section-link" href="/browse/?type=realm">全部势力 →</a>
+    </div>
+    <div class="feature-grid">
+      {realms.slice(0, 9).map((e) => <EntityCard e={e} />)}
+    </div>
+  </section>
+</Base>

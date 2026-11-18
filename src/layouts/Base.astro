@@ -1,0 +1,60 @@
+---
+import '../styles/global.css';
+import '../styles/pages.css';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import { SITE } from '../lib/site';
+
+interface Props {
+  title?: string;
+  description?: string;
+  image?: string;
+  noindex?: boolean;
+  hideFooter?: boolean;
+}
+
+const { title, description = SITE.description, image, noindex = false, hideFooter = false } = Astro.props;
+const pageTitle = title ? `${title} · ${SITE.name}` : `${SITE.name} · ${SITE.nameEn}`;
+const canonical = new URL(Astro.url.pathname, Astro.site ?? SITE.url).href;
+const ogImage = image ? new URL(image, Astro.site ?? SITE.url).href : undefined;
+---
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{pageTitle}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    {noindex && <meta name="robots" content="noindex" />}
+    <meta name="theme-color" content="#f4f0e6" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <meta property="og:type" content="article" />
+    <meta property="og:site_name" content={`${SITE.name} · ${SITE.nameEn}`} />
+    <meta property="og:title" content={pageTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    {ogImage && <meta property="og:image" content={ogImage} />}
+    <meta name="twitter:card" content={ogImage ? 'summary_large_image' : 'summary'} />
+    <meta name="twitter:title" content={pageTitle} />
+    <meta name="twitter:description" content={description} />
+    <link rel="sitemap" href="/sitemap-index.xml" />
+    <script type="application/ld+json" set:html={JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': 'WebSite',
+      name: SITE.name,
+      alternateName: SITE.nameEn,
+      url: (Astro.site ?? SITE.url).href,
+      description: SITE.description,
+      inLanguage: 'zh-CN',
+    })} />
+  </head>
+  <body>
+    <a href="#main" class="sr-only">跳到主要内容</a>
+    <Header />
+    <main id="main">
+      <slot />
+    </main>
+    {!hideFooter && <Footer />}
+  </body>
+</html>

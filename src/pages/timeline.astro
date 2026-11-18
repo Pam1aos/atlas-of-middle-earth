@@ -1,0 +1,138 @@
+---
+import Base from '../layouts/Base.astro';
+import entities from '../data/entities.json';
+import { ERAS, ERA_META, ERA_COLORS } from '../lib/types';
+
+const all = entities as any[];
+
+// events with an era and a year
+const events = all.filter((e) => e.type === 'event' && e.era && (e.dates || []).some((d: any) => d.era && d.year));
+const unknownTime = all.filter((e) => e.type === 'event' && (!e.era || !(e.dates || []).some((d: any) => d.year)));
+
+const eraData = ERAS.map((era) => {
+  const list = events.filter((e) => e.era === era);
+  const byYear = new Map<number, any[]>();
+  for (const e of list) {
+    const d = (e.dates || []).find((x: any) => x.year && x.era === era) || e.dates[0];
+    const y = d?.year ?? 0;
+    if (!byYear.has(y)) byYear.set(y, []);
+    byYear.get(y)!.push(e);
+  }
+  const years = [...byYear.entries()].sort((a, b) => a[0] - b[0]);
+  const people = all
+    .filter((e) => e.type === 'character' && e.era === era && e.image)
+    .sort((a, b) => b.citedBy - a.citedBy)
+    .slice(0, 8);
+  return { era, years, count: list.length, people };
+});
+
+const yearPages = all.filter((e) => e.type === 'date' && /^(双树|第一|第二|第三|第四)纪元\d+年$/.test(e.title));
+const selected = (new URL(Astro.url).searchParams.get('era') || ERAS[3]) as string;
+const activeIdx = Math.max(0, ERAS.indexOf(selected as any));
+const active = eraData[activeIdx];
+---
+<Base title="时代" description="按纪元组织的中洲历史年表：双树纪元、第一至第四纪元的重要事件与人物。">
+  <section class="wrap" style="padding-top:clamp(2rem,4vw,3rem)">
+    <div class="eyebrow">Chronicle</div>
+    <h1 style="font-size:clamp(2rem,4vw,3rem);margin-top:.5rem">时代与年表</h1>
+    <p class="lede" style="margin-top:.8rem">
+      不同纪元的年份不在同一条数轴上，因此这里按纪元分轴排列。
+      每一条都来自维基的事件条目，时间取自信息框或标题中的纪年。
+    </p>
+    <p class="muted" style="font-size:.82rem;margin-top:.6rem">
+      共 {events.length.toLocaleString('zh-CN')} 个可定年事件；另有 {unknownTime.length} 个事件在原站没有明确纪年，列在本页末尾。
+    </p>
+  </section>
+
+  <nav class="wrap" style="margin-top:1.6rem" aria-label="纪元切换">
+    <div class="tabs">
+      {ERAS.map((era, i) => (
+        <a
+          class="tab"
+          href={`/timeline/?era=${encodeURIComponent(era)}`}
+          aria-selected={i === activeIdx}
+          style={i === activeIdx ? `background:${ERA_COLORS[era]};color:#f4f0e6` : ''}
+        >{era}</a>
+      ))}
+    </div>
+  </nav>
+
+  <section class="wrap" style="padding-block:1.4rem 0">
+    <p class="muted" style="max-width:62ch">{ERA_META[active.era].blurb}（{ERA_META[active.era].span}）</p>
+  </section>
+
+  <section class="wrap" style="padding-bottom:3rem">
+    {active.count === 0 ? (
+      <div class="empty-state" style="margin-top:1.5rem">
+        <h3>本纪元暂无带明确年份的事件</h3>
+        <p>可以到 <a href="/browse/?era={encodeURIComponent(active.era)}">百科</a> 浏览这个时代的其他条目。</p>
+      </div>
+    ) : (
+      <div class="tl">
+        {active.years.map(([year, list]) => (
+          <Fragment>
+            <h2 class="tl-year">{year === 0 ? '年份不详' : `${active.era} ${year} 年`}</h2>
+            <div class="tl-items">
+              {list.map((e: any) => {
+                const t = e.dates?.[0]?.text || '';
+                const precise = /月/.test(t) ? t.slice(0, 14) : '';
+                return (
+                  <a class="tl-item" href={`/entry/${encodeURIComponent(e.slug)}/`}>
+                    {precise && <time>{precise}</time>}
+                    <span>{e.title}</span>
+                  </a>
+                );
+              })}
+            </div>
+          </Fragment>
+        ))}
+      </div>
+    )}
+
+    {yearPages.filter((y) => y.era === active.era).length > 0 && (
+      <div style="margin-top:3rem">
+        <div class="eyebrow">Year index</div>
+        <h2 style="font-size:1.3rem;margin:.4rem 0 .6rem">按年份查阅（{active.era}）</h2>
+        <p class="muted" style="font-size:.84rem;margin-bottom:.8rem">
+          这些是原站的年份页，按年份汇总当年发生的事。它们本身不是事件，因此没有画进上方时间轴。
+        </p>
+        <div style="display:flex;flex-wrap:wrap;gap:.4rem">
+          {yearPages
+            .filter((y) => y.era === active.era)
+            .sort((a, b) => (a.dates?.[0]?.year || 0) - (b.dates?.[0]?.year || 0))
+            .map((y) => (
+              <a class="chip" href={`/entry/${encodeURIComponent(y.slug)}/`}>{y.title.replace(active.era, '')}</a>
+            ))}
+        </div>
+      </div>
+    )}
+
+    {active.people.length > 0 && (
+      <div style="margin-top:3rem">
+        <div class="eyebrow">People of the age</div>
+        <h2 style="font-size:1.4rem;margin:.4rem 0 1rem">{active.era}的代表人物</h2>
+        <div style="display:flex;flex-wrap:wrap;gap:.5rem">
+          {active.people.map((p: any) => (
+            <a class="chip" href={`/entry/${encodeURIComponent(p.slug)}/`}>
+              {p.image && <img src={p.image} alt="" width="22" height="22" style="width:22px;height:22px;border-radius:50%;object-fit:cover" loading="lazy" />}
+              {p.title}
+            </a>
+          ))}
+        </div>
+      </div>
+    )}
+
+    {unknownTime.length > 0 && activeIdx === ERAS.length - 1 && (
+      <div style="margin-top:3rem">
+        <div class="eyebrow">Undated</div>
+        <h2 style="font-size:1.3rem;margin:.4rem 0 .8rem">没有明确纪年的事件（{unknownTime.length}）</h2>
+        <p class="muted" style="font-size:.84rem;margin-bottom:.8rem">这些条目描述事件，但原站没有给出可解析的年份，因此不放进时间轴，避免虚构时间。</p>
+        <div style="display:flex;flex-wrap:wrap;gap:.45rem">
+          {unknownTime.slice(0, 60).map((e: any) => (
+            <a class="chip" href={`/entry/${encodeURIComponent(e.slug)}/`}>{e.title}</a>
+          ))}
+        </div>
+      </div>
+    )}
+  </section>
+</Base>

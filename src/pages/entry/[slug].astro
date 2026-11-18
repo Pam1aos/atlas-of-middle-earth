@@ -1,0 +1,205 @@
+---
+import fs from 'node:fs';
+import path from 'node:path';
+import Base from '../../layouts/Base.astro';
+import MiniGraph from '../../components/MiniGraph.tsx';
+import stats from '../../data/stats.json';
+import { typeMeta } from '../../lib/types';
+import { REL_LABEL, REL_REVERSE, REL_ORDER } from '../../lib/relations';
+import { entities, bySlug, outBy, inBy, egoFor } from '../../lib/entryData';
+
+export async function getStaticPaths() {
+  return entities.map((e) => ({
+    params: { slug: e.slug },
+    props: { e, out: (outBy.get(e.slug) || []).slice(0, 200), inc: (inBy.get(e.slug) || []).slice(0, 200), ego: egoFor(e) },
+  }));
+}
+
+const { e, out, inc, ego } = Astro.props as any;
+const meta = typeMeta(e.type);
+
+const bodyPath = path.resolve('src/data/bodies', `${e.slug}.html`);
+const bodyHtml = fs.existsSync(bodyPath) ? fs.readFileSync(bodyPath, 'utf8') : '';
+
+// group outgoing relations by type
+const outGroups = new Map<string, any[]>();
+for (const r of out) {
+  const t = bySlug.get(r.t);
+  if (!t) continue;
+  if (!outGroups.has(r.type)) outGroups.set(r.type, []);
+  outGroups.get(r.type)!.push({ title: t.title, slug: t.slug, evidence: r.evidenceText, type: t.type });
+}
+const inGroups = new Map<string, any[]>();
+for (const r of inc) {
+  const s = bySlug.get(r.s);
+  if (!s) continue;
+  if (!inGroups.has(r.type)) inGroups.set(r.type, []);
+  inGroups.get(r.type)!.push({ title: s.title, slug: s.slug, evidence: r.evidenceText, type: s.type });
+}
+
+const orderedOut = REL_ORDER.filter((t) => outGroups.has(t));
+const orderedIn = REL_ORDER.filter((t) => inGroups.has(t));
+
+const totalRel = out.length + inc.length;
+const description = (e.summary || `${e.title} · ${e.sectionLabel}条目`).slice(0, 150);
+
+// human-readable date line
+const dateLine = (e.dates || []).map((d: any) => `${d.label}：${d.text}`).slice(0, 3);
+---
+<Base title={e.title} description={description} image={e.image || undefined}>
+  <article class="entry-hero wrap">
+    <nav class="crumbs" aria-label="面包屑">
+      <a href="/browse/">百科</a>
+      <span aria-hidden="true">/</span>
+      <a href={`/browse/?type=${e.type}`}>{meta.label}</a>
+      {e.era && <>
+        <span aria-hidden="true">/</span>
+        <a href={`/timeline/?era=${encodeURIComponent(e.era)}`}>{e.era}</a>
+      </>}
+    </nav>
+
+    <div class="entry-title-row">
+      <h1 class="entry-title">{e.title}</h1>
+      <span class="tbadge" style={`--tb:${meta.color}`}>{meta.label}</span>
+      {e.flags?.length > 0 && <span class="tbadge" title="原站维护标记">原站标记：{e.flags.join('、')}</span>}
+    </div>
+    {e.english && <div class="entry-title-en">{e.english}</div>}
+    {e.aliases?.length > 0 && (
+      <p class="entry-alias">
+        别名：{e.aliases.map((a: string, i: number) => (
+          <span><b>{a}</b>{i < e.aliases.length - 1 ? '、' : ''}</span>
+        ))}
+      </p>
+    )}
+    {e.summary && <p class="lede" style="margin-top:1rem">{e.summary}</p>}
+
+    <div class="entry-layout">
+      <div>
+        {orderedOut.length > 0 && (
+          <section aria-labelledby="rel-h" style="margin-top:1.6rem">
+            <div class="eyebrow">Connections</div>
+            <h2 id="rel-h" style="font-size:1.4rem;margin-top:.4rem">相关条目</h2>
+            <div class="rel-grid">
+              {orderedOut.map((t) => (
+                <div class="rel-card">
+                  <h4>{REL_LABEL[t] || t}</h4>
+                  <ul>
+                    {outGroups.get(t)!.slice(0, 8).map((x: any) => (
+                      <li>
+                        <a
+                          href={`/entry/${encodeURIComponent(x.slug)}/`}
+                          title={x.evidence ? `出处：${x.evidence}` : undefined}
+                        >{x.title}</a>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+            <p class="muted" style="font-size:.76rem;margin-top:.6rem">
+              以上关系均由条目信息框字段推导，鼠标悬停可查看具体字段。
+              <a href={`/graph/?focus=${encodeURIComponent(e.slug)}`}>在完整图谱中查看 →</a>
+            </p>
+          </section>
+        )}
+
+        <div class="entry-body prose" set:html={bodyHtml} />
+
+        {dateLine.length > 0 && (
+          <section style="margin-top:2.5rem">
+            <div class="eyebrow">Dates</div>
+            <h2 style="font-size:1.4rem;margin:.4rem 0 .8rem">时间信息</h2>
+            <ul style="list-style:none;padding:0;display:flex;flex-direction:column;gap:.4rem">
+              {dateLine.map((d: string) => (
+                <li style="font-size:.9rem;padding:.55rem .9rem;border-left:2px solid var(--gold);background:rgba(216,198,154,.14);border-radius:0 12px 12px 0">{d}</li>
+              ))}
+            </ul>
+          </section>
+        )}
+
+        {orderedIn.length > 0 && (
+          <section style="margin-top:2.5rem" aria-labelledby="inrel-h">
+            <div class="eyebrow">Inbound</div>
+            <h2 id="inrel-h" style="font-size:1.3rem;margin:.4rem 0 .6rem">反向关联</h2>
+            <div class="rel-grid">
+              {orderedIn.slice(0, 6).map((t) => (
+                <div class="rel-card">
+                  <h4>{REL_REVERSE[t] || t}</h4>
+                  <ul>
+                    {inGroups.get(t)!.slice(0, 8).map((x: any) => (
+                      <li><a href={`/entry/${encodeURIComponent(x.slug)}/`}>{x.title}</a></li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+      </div>
+
+      <aside class="entry-aside">
+        <div class="infobox">
+          <div class="infobox__media">
+            {e.image ? (
+              <img src={e.image} alt={`${e.title} — 魔戒中文维基插图`} width="640" height="480" />
+            ) : (
+              <div class="infobox__noimg">
+                <span aria-hidden="true">{meta.glyph}</span>
+                <span>暂无插图</span>
+              </div>
+            )}
+          </div>
+          <div class="infobox__body">
+            {e.factGroups?.length ? e.factGroups.map((g: any) => (
+              <Fragment>
+                <div class="infobox__group">{g.name}</div>
+                <dl style="margin:0">
+                  {g.rows.map((r: any) => (
+                    <div class="fact">
+                      <dt>{r.label}</dt>
+                      <dd set:html={r.html} />
+                    </div>
+                  ))}
+                </dl>
+              </Fragment>
+            )) : (
+              <p class="muted" style="font-size:.84rem">该条目没有结构化信息框，事实请见正文。</p>
+            )}
+          </div>
+        </div>
+
+        {ego.nodes.length > 1 && (
+          <div class="side-card" style="padding:.6rem">
+            <h3 style="padding:.5rem .5rem 0">关系图谱</h3>
+            <div style="height:260px;border-radius:14px;overflow:hidden;background:var(--paper-2)">
+              <MiniGraph client:visible data={ego} height="260px" layout="concentric" />
+            </div>
+            <a class="btn btn--ghost" style="width:100%;margin-top:.5rem" href={`/graph/?focus=${encodeURIComponent(e.slug)}`}>
+              展开探索
+            </a>
+          </div>
+        )}
+
+        <div class="side-card">
+          <h3>来源</h3>
+          <ul>
+            <li><a href={e.source} target="_blank" rel="noopener noreferrer">魔戒中文维基：{e.title} ↗</a></li>
+            {e.updated && <li class="muted" style="font-size:.76rem">原站更新：{e.updated.slice(0, 10)}</li>}
+            <li class="muted" style="font-size:.76rem">被 {e.citedBy} 个条目引用</li>
+          </ul>
+        </div>
+      </aside>
+    </div>
+  </article>
+
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'Article',
+    headline: e.title,
+    description,
+    image: e.image ? new URL(e.image, Astro.site ?? 'https://atlas-of-middle-earth.example').href : undefined,
+    inLanguage: 'zh-CN',
+    isPartOf: { '@type': 'WebSite', name: '中洲志' },
+    citation: e.source,
+  })} />
+</Base>

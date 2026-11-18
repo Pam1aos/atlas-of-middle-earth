@@ -1,0 +1,183 @@
+---
+import Base from '../layouts/Base.astro';
+import EntityCard from '../components/EntityCard.astro';
+import MiniGraph from '../components/MiniGraph.tsx';
+import stats from '../data/stats.json';
+import entities from '../data/entities.json';
+import { TYPE_META, ERAS, ERA_META, ERA_COLORS, typeMeta } from '../lib/types';
+
+const all = entities as any[];
+
+const typeCounts: Record<string, number> = stats.types as any;
+const browseTypes = ['character', 'race', 'place', 'realm', 'event', 'item', 'work', 'culture']
+  .filter((t) => typeCounts[t]);
+
+const eraCounts: Record<string, number> = {};
+for (const e of all) if (e.era) eraCounts[e.era] = (eraCounts[e.era] || 0) + 1;
+
+const withImage = all.filter((e) => e.image);
+const featured = ['阿拉贡', '甘道夫', '夏尔', '魔戒大战', '至尊戒', '洛汗']
+  .map((t) => all.find((e) => e.title === t))
+  .filter(Boolean);
+
+const heroImage = (all.find((e) => e.title === '阿拉贡') || withImage[0]) as any;
+const topCited = [...all].sort((a, b) => b.citedBy - a.citedBy).slice(0, 6);
+
+const fmt = (n: number) => n.toLocaleString('zh-CN');
+---
+<Base description={`中洲志：${fmt(stats.entities)} 条中洲条目、${fmt(stats.relations)} 条人物与地点关系，可检索、可漫游的托尔金世界档案。`}>
+
+  <section class="hero wrap">
+    <div class="hero-grid">
+      <div>
+        <div class="eyebrow">Atlas of Middle-earth · {fmt(stats.entities)} entries</div>
+        <h1>
+          中洲志
+          <span class="hero-sub">A field guide to Tolkien's world</span>
+        </h1>
+        <p class="lede">
+          从魔戒中文维基整理而来的中洲世界档案。人物、种族、地点、势力、事件与物品被重新编排成可检索的条目，
+          并以关系图谱把散落在正文里的血缘、效忠与征战连成一张网。
+        </p>
+        <div class="hero-actions">
+          <a class="btn" href="/browse/">探索世界</a>
+          <a class="btn btn--ghost" href="/graph/">打开关系图谱</a>
+        </div>
+        <div class="hero-stats">
+          <div class="hero-stat"><strong>{fmt(stats.entities)}</strong><span>条目</span></div>
+          <div class="hero-stat"><strong>{fmt(stats.relations)}</strong><span>关系</span></div>
+          <div class="hero-stat"><strong>{fmt(stats.withFacts)}</strong><span>带结构化信息框</span></div>
+          <div class="hero-stat"><strong>{fmt(stats.noImage)}</strong><span>暂无插图</span></div>
+        </div>
+      </div>
+
+      <div class="hero-art">
+        <svg class="blob" viewBox="0 0 400 420" aria-hidden="true" preserveAspectRatio="xMidYMid slice">
+          <path d="M70 120c30-60 120-90 190-60s90 120 60 200-120 130-190 100S40 180 70 120z" fill="#a9b59b" opacity=".55" />
+          <path d="M120 300c40-30 110-10 140 40s10 90-40 100-120-30-130-70 10-60 30-70z" fill="#d8c69a" opacity=".65" />
+          <circle cx="300" cy="330" r="46" fill="#667552" opacity=".22" />
+        </svg>
+        {heroImage?.image && (
+          <div class="hero-art__frame">
+            <img src={heroImage.image} alt={`${heroImage.title}的插图`} width="480" height="600" fetchpriority="high" />
+          </div>
+        )}
+        <div class="hero-art__badge">中</div>
+        <div class="hero-art__tag">
+          <b>{heroImage?.title}</b>
+          <span class="tbadge" style={`--tb:${typeMeta(heroImage?.type).color}`}>{typeMeta(heroImage?.type).label}</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section wrap" aria-labelledby="eras-h">
+    <div class="section-head">
+      <div>
+        <div class="eyebrow">Timeline</div>
+        <h2 id="eras-h">五个时代，一部编年史</h2>
+        <p>按数据库实际收录的纪年组织。纪元之间的年份不可直接并列，每个时代单独成轴。</p>
+      </div>
+      <a class="section-link" href="/timeline/">查看完整年表 →</a>
+    </div>
+    <div class="era-grid">
+      {ERAS.map((era, idx) => (
+        <a class="era-card" href={`/timeline/?era=${encodeURIComponent(era)}`} style={`--era:${ERA_COLORS[era]}`}>
+          <div class="era-card__idx">ERA {String(idx + 1).padStart(2, '0')}</div>
+          <h3>{era}</h3>
+          <div class="era-card__span">{ERA_META[era].span}</div>
+          <div class="era-card__count">
+            <span class="tbadge" style={`--tb:${ERA_COLORS[era]}`}>{fmt(eraCounts[era] || 0)} 条相关条目</span>
+          </div>
+        </a>
+      ))}
+    </div>
+  </section>
+
+  <section class="section wrap" aria-labelledby="types-h">
+    <div class="section-head">
+      <div>
+        <div class="eyebrow">Collections</div>
+        <h2 id="types-h">从哪一类开始？</h2>
+        <p>每一类都来自真实条目计数，点开即按类型筛选。</p>
+      </div>
+      <a class="section-link" href="/browse/">进入百科 →</a>
+    </div>
+    <div class="type-grid">
+      {browseTypes.map((t) => {
+        const m = TYPE_META[t];
+        return (
+          <a class="type-card" href={`/browse/?type=${t}`}>
+            <div class="type-card__top">
+              <span class="type-card__glyph" style={`background:${m.color}`}>{m.glyph}</span>
+              <span class="type-card__n">{fmt(typeCounts[t])}</span>
+            </div>
+            <h3>{m.label}</h3>
+            <p>{m.blurb}</p>
+          </a>
+        );
+      })}
+    </div>
+  </section>
+
+  <section class="section wrap" aria-labelledby="featured-h">
+    <div class="section-head">
+      <div>
+        <div class="eyebrow">Selected</div>
+        <h2 id="featured-h">值得先读的六条</h2>
+        <p>人工挑选，但每一条都指向数据库里真实存在的条目与图片。</p>
+      </div>
+    </div>
+    <div class="feature-grid">
+      {featured.map((e) => <EntityCard e={e} />)}
+    </div>
+  </section>
+
+  <section class="section wrap" aria-labelledby="graph-h">
+    <div class="section-head">
+      <div>
+        <div class="eyebrow">Knowledge graph</div>
+        <h2 id="graph-h">关系不是装饰</h2>
+        <p>
+          这里的每条连线都来自条目的信息框字段——父亲、子嗣、种族、所属势力。
+          拖拽、缩放，点开任意节点继续走。
+        </p>
+      </div>
+      <a class="section-link" href="/graph/">进入完整图谱 →</a>
+    </div>
+    <div class="graph-window">
+      <MiniGraph client:visible src="/data/home-graph.json" height="500px" layout="cose" />
+      <div class="graph-window__hint">拖动节点 · 滚轮缩放 · 点击进入条目</div>
+      <a class="btn btn--ghost graph-window__cta" href="/graph/">完整图谱</a>
+    </div>
+  </section>
+
+  <section class="section wrap" aria-labelledby="cov-h">
+    <div class="section-head">
+      <div>
+        <div class="eyebrow">Coverage</div>
+        <h2 id="cov-h">这份档案覆盖了什么</h2>
+      </div>
+      <a class="section-link" href="/about/">数据说明与已知缺失 →</a>
+    </div>
+    <div class="coverage">
+      <div>
+        <h4>收录范围</h4>
+        <p>魔戒中文维基主命名空间的全部 {fmt(stats.entities)} 个条目，含正文、信息框与插图；不含模板、分类、讨论与博客页。</p>
+      </div>
+      <div>
+        <h4>结构化程度</h4>
+        <p>{fmt(stats.withFacts)} 个条目带有可解析的信息框，共 {fmt(stats.totalFacts)} 条字段，构成 {fmt(stats.relations)} 条有出处的关系。</p>
+      </div>
+      <div>
+        <h4>已知缺失</h4>
+        <p>{fmt(stats.noImage)} 个条目暂无插图（原站即无图）；没有可靠坐标，因此不提供伪造的地理地图，改用地区层级浏览。</p>
+      </div>
+      <div>
+        <h4>最常被引用</h4>
+        <p>{topCited.slice(0, 4).map((e) => e.title).join('、')} 是正文里被链接最多的条目。</p>
+      </div>
+    </div>
+  </section>
+
+</Base>

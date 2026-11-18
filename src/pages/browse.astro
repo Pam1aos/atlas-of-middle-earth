@@ -1,0 +1,32 @@
+---
+import Base from '../layouts/Base.astro';
+import BrowseApp from '../components/BrowseApp.tsx';
+import entities from '../data/entities.json';
+
+const all = entities as any[];
+const rows = all.map((e) => ({
+  slug: e.slug,
+  title: e.title,
+  english: e.english || '',
+  type: e.type,
+  era: e.era || '',
+  image: e.image || null,
+  aliases: (e.aliases || []).slice(0, 6).join('|'),
+  summary: (e.summary || '').slice(0, 96),
+  cited: e.citedBy || 0,
+}));
+---
+<Base
+  title="百科"
+  description={`按类型、时代与关键词浏览中洲世界的 ${all.length.toLocaleString('zh-CN')} 个条目：人物、地点、势力、事件与物品。`}
+>
+  <section class="browse-head wrap">
+    <div class="eyebrow">Encyclopaedia</div>
+    <h1>百科</h1>
+    <p class="lede" style="margin-top:.8rem">
+      全部条目来自魔戒中文维基，按类型与时代重新归类。搜索支持中文名、英文名与别名。
+    </p>
+  </section>
+
+  <BrowseApp client:load rows={rows} />
+</Base>
