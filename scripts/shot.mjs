@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 const PORT = 9333;
-const OUT = path.resolve('screenshots');
+const OUT = path.resolve(process.env.OUT || 'screenshots');
 fs.mkdirSync(OUT, { recursive: true });
 
 async function json(url, opts) {
@@ -82,6 +82,14 @@ for (const s of shots) {
   await cdp.send('Page.navigate', { url: BASE + s.url });
   await new Promise((r) => setTimeout(r, s.wait ?? 1400));
   await cdp.evaluate('document.fonts?.ready ? document.fonts.ready.then(()=>true) : true');
+  // walk the page so client:visible islands and lazy images hydrate before capture
+  await cdp.evaluate(`(async () => {
+    const h = document.documentElement.scrollHeight;
+    for (let y = 0; y < h; y += 500) { window.scrollTo(0, y); await new Promise(r => setTimeout(r, 70)); }
+    window.scrollTo(0, 0);
+    await new Promise(r => setTimeout(r, 600));
+    return true;
+  })()`);
   await new Promise((r) => setTimeout(r, 300));
 
   let clip;
