@@ -18,6 +18,11 @@
 | 地理浏览 | 没有可靠坐标，因此用「地区 → 地点」层级替代地图，明确标注不伪造地理 |
 | 数据说明 | 来源、覆盖率、结构化方法、数据质量报告、已知缺失、图片署名 |
 
+## 线上地址
+
+- 生产环境：**https://atlas-of-middle-earth.vercel.app**
+- Vercel 项目：`pamus/atlas-of-middle-earth`（Framework: Astro，Build: `npm run build`，Output: `dist`）
+- 环境变量：`SITE_URL=https://atlas-of-middle-earth.vercel.app`（生产环境，用于 canonical / sitemap）
 ## 技术栈
 
 - **Astro 7** 静态生成，`output: static`，无 SSR、无 API、无数据库连接
