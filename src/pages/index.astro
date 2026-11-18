@@ -29,11 +29,11 @@ const fmt = (n: number) => n.toLocaleString('zh-CN');
 
   <section class="hero wrap">
     <div class="hero-grid">
-      <div>
+      <div class="hero-copy">
         <div class="eyebrow">Atlas of Middle-earth · {fmt(stats.entities)} entries</div>
         <h1>
           中洲志
-          <span class="hero-sub">A field guide to Tolkien's world</span>
+          <span class="hero-sub">a field guide to tolkien's world</span>
         </h1>
         <p class="lede">
           从魔戒中文维基整理而来的中洲世界档案。人物、种族、地点、势力、事件与物品被重新编排成可检索的条目，
@@ -43,29 +43,57 @@ const fmt = (n: number) => n.toLocaleString('zh-CN');
           <a class="btn" href="/browse/">探索世界</a>
           <a class="btn btn--ghost" href="/graph/">打开关系图谱</a>
         </div>
-        <div class="hero-stats">
-          <div class="hero-stat"><strong>{fmt(stats.entities)}</strong><span>条目</span></div>
-          <div class="hero-stat"><strong>{fmt(stats.relations)}</strong><span>关系</span></div>
-          <div class="hero-stat"><strong>{fmt(stats.withFacts)}</strong><span>带结构化信息框</span></div>
-          <div class="hero-stat"><strong>{fmt(stats.noImage)}</strong><span>暂无插图</span></div>
+        <div class="hero-pills">
+          <a class="chip" href="/browse/?type=character">人物 {fmt(typeCounts.character)}</a>
+          <a class="chip" href="/browse/?type=place">地点 {fmt(typeCounts.place)}</a>
+          <a class="chip" href="/browse/?type=event">事件 {fmt(typeCounts.event)}</a>
+          <a class="chip" href="/browse/?type=item">物品 {fmt(typeCounts.item)}</a>
         </div>
       </div>
 
-      <div class="hero-art">
-        <svg class="blob" viewBox="0 0 400 420" aria-hidden="true" preserveAspectRatio="xMidYMid slice">
-          <path d="M70 120c30-60 120-90 190-60s90 120 60 200-120 130-190 100S40 180 70 120z" fill="#a9b59b" opacity=".55" />
-          <path d="M120 300c40-30 110-10 140 40s10 90-40 100-120-30-130-70 10-60 30-70z" fill="#d8c69a" opacity=".65" />
-          <circle cx="300" cy="330" r="46" fill="#667552" opacity=".22" />
-        </svg>
-        {heroImage?.image && (
-          <div class="hero-art__frame">
-            <img src={heroImage.image} alt={`${heroImage.title}的插图`} width="480" height="600" fetchpriority="high" />
+      <div class="hero-card">
+        <div class="hero-card__top">
+          <span class="hero-card__dot" aria-hidden="true"></span>
+          <div class="hero-card__tags" aria-hidden="true">
+            <span>条目</span><span>关系</span><span>纪元</span>
           </div>
-        )}
-        <div class="hero-art__badge">中</div>
-        <div class="hero-art__tag">
-          <b>{heroImage?.title}</b>
-          <span class="tbadge" style={`--tb:${typeMeta(heroImage?.type).color}`}>{typeMeta(heroImage?.type).label}</span>
+        </div>
+        <div class="hero-card__body">
+          <div class="hero-art">
+            <svg class="blob" viewBox="0 0 400 420" aria-hidden="true" preserveAspectRatio="xMidYMid slice">
+              <ellipse cx="150" cy="120" rx="120" ry="96" fill="#5f8a3e" opacity=".55" />
+              <ellipse cx="235" cy="185" rx="105" ry="120" fill="#86a05c" opacity=".45" />
+              <ellipse cx="300" cy="300" rx="96" ry="78" fill="#c9a17c" opacity=".55" />
+              <ellipse cx="140" cy="330" rx="120" ry="70" fill="#e0c6a4" opacity=".6" />
+            </svg>
+            {heroImage?.image && (
+              <div class="hero-art__frame">
+                <img src={heroImage.image} alt={`${heroImage.title}的插图`} width="480" height="600" fetchpriority="high" />
+              </div>
+            )}
+            <div class="hero-art__tag">
+              {heroImage?.title}
+              <span class="tbadge" style={`--tb:${typeMeta(heroImage?.type).color}`}>{typeMeta(heroImage?.type).label}</span>
+            </div>
+          </div>
+
+          <div class="hero-meta">
+            <div class="meta-block">
+              <span class="meta-block__label">Entries</span>
+              <strong class="meta-block__value">{fmt(stats.entities)}</strong>
+              <span class="meta-block__note">正文条目</span>
+            </div>
+            <div class="meta-block">
+              <span class="meta-block__label">Relations</span>
+              <strong class="meta-block__value">{fmt(stats.relations)}</strong>
+              <span class="meta-block__note">有出处的关系</span>
+            </div>
+            <div class="meta-block">
+              <span class="meta-block__label">Span</span>
+              <strong class="meta-block__value">{ERAS.length}</strong>
+              <span class="meta-block__note">个纪元</span>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -87,7 +115,7 @@ const fmt = (n: number) => n.toLocaleString('zh-CN');
           <h3>{era}</h3>
           <div class="era-card__span">{ERA_META[era].span}</div>
           <div class="era-card__count">
-            <span class="tbadge" style={`--tb:${ERA_COLORS[era]}`}>{fmt(eraCounts[era] || 0)} 条相关条目</span>
+            <span class="tbadge">{fmt(eraCounts[era] || 0)} 条相关条目</span>
           </div>
         </a>
       ))}
@@ -146,7 +174,7 @@ const fmt = (n: number) => n.toLocaleString('zh-CN');
       <a class="section-link" href="/graph/">进入完整图谱 →</a>
     </div>
     <div class="graph-window">
-      <MiniGraph client:visible src="/data/home-graph.json" height="500px" layout="cose" />
+      <MiniGraph client:visible src="/data/home-graph.json" height="480px" layout="cose" />
       <div class="graph-window__hint">拖动节点 · 滚轮缩放 · 点击进入条目</div>
       <a class="btn btn--ghost graph-window__cta" href="/graph/">完整图谱</a>
     </div>
@@ -171,7 +199,7 @@ const fmt = (n: number) => n.toLocaleString('zh-CN');
       </div>
       <div>
         <h4>已知缺失</h4>
-        <p>{fmt(stats.noImage)} 个条目暂无插图（原站即无图）；没有可靠坐标，因此不提供伪造的地理地图，改用地区层级浏览。</p>
+        <p>{fmt(stats.noImage)} 个条目暂无插图（原站即无图）；没有可靠坐标，因此不提供伪造的地理地图。</p>
       </div>
       <div>
         <h4>最常被引用</h4>
