@@ -1378,6 +1378,7 @@
 .map-pin circle { fill: var(--green); stroke: #fff; stroke-width: 1.5; transition: r .15s; }
 .map-pin text { fill: var(--ink); font-size: 17px; font-family: var(--font-body); font-weight: 600; paint-order: stroke; stroke: rgba(255,255,255,.7); stroke-width: 3; }
 .map-pin:hover circle, .map-pin.is-active circle { fill: var(--ink); }
+.map-pin:hover circle { fill: var(--green-deep); }
 .map-pin.is-faded circle { fill: rgba(79,122,52,.45); }
 .map-pin.is-faded text { fill: rgba(85,96,79,.75); font-weight: 500; }
 
@@ -1430,3 +1431,71 @@
   .map-window { grid-template-columns: 1fr; grid-template-rows: minmax(0, 1fr) auto; height: min(88vh, 720px); }
   .map-side { border-left: 0; border-top: 1px solid var(--line); max-height: 42%; }
 }
+/* ============================================================
+   Atlas map v4 — traced base map + overlay layer
+   ============================================================ */
+.map-canvas { position: relative; overflow: hidden; background: #dfe6d3; }
+.map-stage {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  touch-action: none;
+  cursor: grab;
+}
+.map-stage:active { cursor: grabbing; }
+.map-zoom {
+  position: relative;
+  width: 100%;
+  transform-origin: 0 0;
+  will-change: transform;
+}
+.map-base {
+  display: block;
+  width: 100%;
+  height: auto;
+  user-select: none;
+  filter: sepia(0.42) saturate(0.72) hue-rotate(52deg) brightness(1.02) contrast(0.9);
+  mix-blend-mode: multiply;
+}
+.map-overlay {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+.map-pin { pointer-events: auto; cursor: pointer; }
+.map-pin circle { fill: var(--green); stroke: #fff; stroke-width: 4; }
+.map-pin text {
+  fill: #1d3324;
+  font-size: 58px;
+  font-weight: 700;
+  font-family: var(--font-body);
+  paint-order: stroke;
+  stroke: rgba(255, 253, 246, 0.85);
+  stroke-width: 8;
+}
+.map-pin.is-active circle { fill: var(--ink); }
+.map-pin:hover circle { fill: var(--green-deep); }
+.map-pin.is-active text { fill: #12251a; }
+
+.map-event rect { fill: var(--gold); stroke: #fff; stroke-width: 3; }
+.map-event text {
+  fill: #6b5543;
+  font-size: 34px;
+  font-family: var(--font-body);
+  paint-order: stroke;
+  stroke: rgba(255, 253, 246, 0.9);
+  stroke-width: 7;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+.map-event:hover text { opacity: 1; }
+.map-event { pointer-events: auto; cursor: help; }
+
+.map-nature circle { fill: rgba(255, 253, 246, 0.92); stroke: rgba(79, 122, 52, 0.6); stroke-width: 2.5; }
+.map-nature path { fill: var(--green); }
+.map-nature--beast path { fill: var(--bark); }
+.map-nature { pointer-events: auto; cursor: help; }
+
+.map-off { font-size: 0.62rem; color: var(--muted); font-style: normal; margin-left: 0.2rem; }
