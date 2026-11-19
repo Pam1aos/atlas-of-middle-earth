@@ -17,7 +17,7 @@ export default function AgentDock() {
   const [messages, setMessages] = useState<Msg[]>([]);
   const [sources, setSources] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
-  const [sourcesOpen, setSourcesOpen] = useState(true);
+  const [sourcesOpen, setSourcesOpen] = useState(false);
   const [serverState, setServerState] = useState<'unknown' | 'on' | 'off'>('unknown');
 
   const recsRef = useRef<Map<string, AgentRec> | null>(null);
@@ -111,20 +111,24 @@ export default function AgentDock() {
           }),
         });
         if (res.status === 501) {
-          push({ role: 'agent', blocks: [{ kind: 'note', text: '服务端未配置模型 Key，以上为本地检索结果。' }] });
+          /* no model configured: keep the local answer, no meta note */
         } else if (!res.ok) {
-          const data = await res.json().catch(() => ({}));
-          const detail = data.message ? `：${String(data.message).slice(0, 120)}` : '';
-          push({
-            role: 'agent',
-            blocks: [{ kind: 'note', text: `模型服务返回错误（${data.status || data.error || res.status}）${detail}。以上为本地检索结果。` }],
-          });
+          push({ role: 'agent', blocks: [{ kind: 'note', text: '模型服务暂时不可用，可以先看上面的条目结果。' }] });
         } else {
           const data = await res.json();
-          if (data.text) push({ role: 'agent', blocks: [{ kind: 'h', text: '模型整合' }, { kind: 'p', text: data.text }] });
+          if (data.text) {
+            const paras = String(data.text)
+              .split(/\n{2,}|\r\n{2,}/)
+              .map((t) => t.trim())
+              .filter(Boolean);
+            push({
+              role: 'agent',
+              blocks: [{ kind: 'h', text: '模型整合' }, ...paras.map((text) => ({ kind: 'p' as const, text }))],
+            });
+          }
         }
       } catch {
-        push({ role: 'agent', blocks: [{ kind: 'note', text: '模型服务不可用，以上为本地检索结果。' }] });
+        push({ role: 'agent', blocks: [{ kind: 'note', text: '模型服务暂时不可用，可以先看上面的条目结果。' }] });
       }
     }
 

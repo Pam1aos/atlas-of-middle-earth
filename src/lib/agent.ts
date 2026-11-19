@@ -81,8 +81,7 @@ export function buildAnswer(
     return {
       blocks: [
         { kind: 'p', text: '我没有在条目库里找到与这个问题直接对应的条目。可以换成具体的名字再试一次，比如「阿拉贡」「夏尔」「魔戒大战」「摩瑞亚」。' },
-        { kind: 'note', text: '这个问题只在本地的 5,303 个条目与 10,063 条关系中检索，没有联网。' },
-      ],
+          ],
       sources: [],
       entity: null,
     };
@@ -150,14 +149,6 @@ export function buildAnswer(
     blocks.push({ kind: 'links', items: related });
   }
 
-  if (opts.llm) {
-    blocks.push({ kind: 'note', text: '以上为本地结构化结果，正在用大模型整合…' });
-  } else {
-    blocks.push({
-      kind: 'note',
-      text: '深入模式沿关系图谱做一跳、两跳的关联展开，只使用本地条目与关系，不调用语言模型。',
-    });
-  }
 
   return { blocks, sources: [...new Set(sources)].slice(0, 10), entity: rec.s };
 }

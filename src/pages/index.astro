@@ -26,6 +26,15 @@ const HERO_POOL = all
   .slice(0, 140)
   .map((e) => ({ s: e.slug, t: e.title, im: e.image, ty: e.type, label: typeMeta(e.type).label, color: typeMeta(e.type).color }));
 
+const FEATURE_POOL = all
+  .filter((e) => e.image && ['character', 'place', 'realm', 'item', 'event'].includes(e.type))
+  .sort((a, b) => b.citedBy - a.citedBy)
+  .slice(0, 160)
+  .map((e) => ({
+    s: e.slug, t: e.title, en: e.english || '', im: e.image, er: e.era || '',
+    su: (e.summary || '').slice(0, 110), label: typeMeta(e.type).label, color: typeMeta(e.type).color,
+  }));
+
 const heroImage = (all.find((e) => e.title === '阿拉贡') || withImage[0]) as any;
 
 const fmt = (n: number) => n.toLocaleString('zh-CN');
@@ -156,10 +165,10 @@ const fmt = (n: number) => n.toLocaleString('zh-CN');
       <div>
         <div class="eyebrow">Selected</div>
         <h2 id="featured-h">值得先读的六条</h2>
-        <p>人工挑选，但每一条都指向数据库里真实存在的条目与图片。</p>
+        <p>每次打开随机抽取六条，全部带插图，指向数据库里真实存在的条目。</p>
       </div>
     </div>
-    <div class="feature-grid">
+    <div class="feature-grid" id="feature-grid">
       {featured.map((e) => <EntityCard e={e} />)}
     </div>
   </section>
@@ -184,6 +193,77 @@ const fmt = (n: number) => n.toLocaleString('zh-CN');
   </section>
 
   <script type="application/json" id="hero-pool" set:html={JSON.stringify(HERO_POOL)} />
+  <script type="application/json" id="feature-pool" set:html={JSON.stringify(FEATURE_POOL)} />
+  <script is:inline>
+    (() => {
+      const el = document.getElementById('feature-pool');
+      const grid = document.getElementById('feature-grid');
+      if (!el || !grid) return;
+      let pool = [];
+      try { pool = JSON.parse(el.textContent || '[]'); } catch { return; }
+      if (pool.length < 6) return;
+      // shuffle a copy and take six, so the selection differs on every visit
+      const shuffled = pool.slice();
+      for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+      }
+      const picks = shuffled.slice(0, 6);
+      const frag = document.createDocumentFragment();
+      picks.forEach((e) => {
+        const a = document.createElement('a');
+        a.className = 'ecard';
+        a.href = '/entry/' + encodeURIComponent(e.s) + '/';
+
+        const media = document.createElement('div');
+        media.className = 'ecard__media';
+        const img = document.createElement('img');
+        img.src = e.im;
+        img.alt = e.t + ' — 魔戒中文维基插图';
+        img.width = 480; img.height = 360;
+        img.loading = 'lazy'; img.decoding = 'async';
+        media.appendChild(img);
+
+        const body = document.createElement('div');
+        body.className = 'ecard__body';
+        const row = document.createElement('div');
+        row.className = 'row';
+        row.style.gap = '.35rem';
+        const badge = document.createElement('span');
+        badge.className = 'tbadge';
+        badge.style.setProperty('--tb', e.color);
+        badge.textContent = e.label;
+        row.appendChild(badge);
+        if (e.er) {
+          const era = document.createElement('span');
+          era.className = 'tbadge';
+          era.textContent = e.er;
+          row.appendChild(era);
+        }
+        const h3 = document.createElement('h3');
+        h3.className = 'ecard__title';
+        h3.textContent = e.t;
+        body.appendChild(row);
+        body.appendChild(h3);
+        if (e.en) {
+          const en = document.createElement('div');
+          en.className = 'ecard__en';
+          en.textContent = e.en;
+          body.appendChild(en);
+        }
+        if (e.su) {
+          const sum = document.createElement('p');
+          sum.className = 'ecard__sum';
+          sum.textContent = e.su;
+          body.appendChild(sum);
+        }
+        a.appendChild(media);
+        a.appendChild(body);
+        frag.appendChild(a);
+      });
+      grid.replaceChildren(frag);
+    })();
+  </script>
   <script is:inline>
     (() => {
       const el = document.getElementById('hero-pool');
