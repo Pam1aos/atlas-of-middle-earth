@@ -82,6 +82,9 @@ for (const s of shots) {
   await cdp.send('Page.navigate', { url: BASE + s.url });
   await new Promise((r) => setTimeout(r, s.wait ?? 1400));
   await cdp.evaluate('document.fonts?.ready ? document.fonts.ready.then(()=>true) : true');
+  // force lazy images to load: below-the-fold images never enter the viewport of
+  // a beyond-viewport capture, so they would render as empty boxes
+  await cdp.evaluate("document.querySelectorAll('img[loading=\"lazy\"]').forEach((i) => { i.loading = 'eager'; })").catch(() => {});
   // walk the page so client:visible islands and lazy images hydrate before capture.
   // fire-and-forget: awaiting a long async evaluate can hang if the renderer swaps context.
   await cdp
@@ -96,6 +99,12 @@ for (const s of shots) {
     })
     .catch(() => {});
   await new Promise((r) => setTimeout(r, 1800));
+  // wait for lazy images to finish before capturing (max 6s)
+  for (let i = 0; i < 24; i++) {
+    const pending = await cdp.evaluate('[...document.images].filter((im) => !im.complete).length').catch(() => 0);
+    if (!pending) break;
+    await new Promise((r) => setTimeout(r, 500));
+  }
   await cdp.evaluate("document.documentElement.style.scrollBehavior='auto'; window.scrollTo(0,0);").catch(() => {});
   await new Promise((r) => setTimeout(r, 250));
 
@@ -112,10 +121,10 @@ for (const s of shots) {
       clip: { x: 0, y: 0, width: s.w, height: Math.min(4200, Math.max(s.h, h)), scale: 1 },
     };
   }
-  // sticky headers paint at the scroll offset in beyond-viewport captures
-  await cdp.evaluate("(() => { const h = document.querySelector('.site-header'); if (h) h.style.position = 'static'; })()").catch(() => {});
+  // sticky/fixed elements paint at the scroll offset in beyond-viewport captures
+  await cdp.evaluate("(() => { const h = document.querySelector('.site-header'); if (h) h.style.position = 'static'; const l = document.querySelector('.agent-launcher'); if (l) l.style.visibility = 'hidden'; })()").catch(() => {});
   const { data } = await cdp.send('Page.captureScreenshot', capture);
-  await cdp.evaluate("(() => { const h = document.querySelector('.site-header'); if (h) h.style.position = ''; })()").catch(() => {});
+  await cdp.evaluate("(() => { const h = document.querySelector('.site-header'); if (h) h.style.position = ''; const l = document.querySelector('.agent-launcher'); if (l) l.style.visibility = ''; })()").catch(() => {});
   fs.writeFileSync(path.join(OUT, `${s.name}.png`), Buffer.from(data, 'base64'));
   console.log('shot', s.name);
 
