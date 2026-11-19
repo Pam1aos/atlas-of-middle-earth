@@ -3,11 +3,28 @@ import Base from '../../layouts/Base.astro';
 import EntityCard from '../../components/EntityCard.astro';
 import MapExplorer from '../../components/MapExplorer.tsx';
 import { all, regionOf, regionList } from '../../lib/regions';
-import { REGION_NOTES } from '../../lib/mapPoints';
+import { REGION_NOTES, REGIONS, PEOPLES, EVENTS, NATURE } from '../../lib/mapPoints';
 import relationsData from '../../data/relations.json';
 
 const relations = relationsData as any[];
 const bySlug = new Map(all.map((e) => [e.slug, e]));
+
+const byTitle = new Map(all.map((e: any) => [e.title, e]));
+const markers = [...REGIONS, ...PEOPLES, ...EVENTS, ...NATURE]
+  .filter((m) => !m.offmap)
+  .map((m) => {
+    const e: any = byTitle.get(m.title);
+    return {
+      title: m.title,
+      x: m.x,
+      y: m.y,
+      kind: m.kind,
+      slug: e?.slug || null,
+      image: e?.image || null,
+      summary: (e?.summary || '').slice(0, 90),
+      type: e?.type || null,
+    };
+  });
 
 const mapRegions = regionList.map((r) => {
   const entities = [...r.list]
@@ -63,8 +80,8 @@ const totalPlaces = all.filter((e) => e.type === 'place' || e.type === 'realm').
     </p>
   </section>
 
-  <section class="wrap" style="padding-block:.6rem 1.4rem">
-    <MapExplorer client:load regions={mapRegions} />
+  <section class="wrap map-wide" style="padding-block:.6rem 1.4rem">
+    <MapExplorer client:load regions={mapRegions} markers={markers} />
   </section>
 
   <section class="section wrap" style="padding-top:0">

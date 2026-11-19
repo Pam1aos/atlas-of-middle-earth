@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { MAP_VIEWBOX, REGION_POINTS, EVENT_POINTS, NATURE_POINTS } from '../lib/mapPoints';
+import { MAP_VIEWBOX } from '../lib/mapPoints';
 
 export interface RegionDatum {
   name: string;
@@ -10,54 +10,69 @@ export interface RegionDatum {
   notes: { slug: string; title: string }[];
 }
 
+export interface MapMarker {
+  title: string;
+  x: number;
+  y: number;
+  kind: 'region' | 'people' | 'event' | 'nature' | 'plant';
+  slug: string | null;
+  image: string | null;
+  summary: string;
+  type: string | null;
+}
+
 const W = MAP_VIEWBOX.w;
 const H = MAP_VIEWBOX.h;
 const MIN_SCALE = 1;
-const MAX_SCALE = 6;
-const homeView = () =>
-  typeof window !== 'undefined' && window.innerWidth < 720
-    ? { scale: 1, x: 0, y: 0 }
-    : { scale: 1.32, x: -210, y: -120 };
+const MAX_SCALE = 7;
 
-export default function MapExplorer({ regions }: { regions: RegionDatum[] }) {
-  const [view, setView] = useState(homeView);
+interface Tip { x: number; y: number; m: MapMarker }
+
+export default function MapExplorer({ regions, markers }: { regions: RegionDatum[]; markers: MapMarker[] }) {
+  const [view, setView] = useState({ scale: 1, x: 0, y: 0 });
   const [touched, setTouched] = useState(false);
-  const setTouch = (v: boolean) => setTouched(v);
   const [selected, setSelected] = useState<string | null>(null);
   const [showEvents, setShowEvents] = useState(true);
   const [showNature, setShowNature] = useState(true);
+  const [showPeoples, setShowPeoples] = useState(true);
   const [panelOpen, setPanelOpen] = useState(true);
   const [query, setQuery] = useState('');
+  const [tip, setTip] = useState<Tip | null>(null);
   const drag = useRef<{ x: number; y: number; vx: number; vy: number } | null>(null);
   const stageRef = useRef<HTMLDivElement>(null);
-
-  const pins = useMemo(() => {
-    const known = new Set(regions.map((r) => r.name));
-    return REGION_POINTS.filter((p) => known.has(p.name) && !p.offmap);
-  }, [regions]);
 
   const byName = useMemo(() => new Map(regions.map((r) => [r.name, r])), [regions]);
   const active = selected ? byName.get(selected) : null;
 
+  const visible = useMemo(
+    () =>
+      markers.filter((m) => {
+        if (m.kind === 'event') return showEvents;
+        if (m.kind === 'nature' || m.kind === 'plant') return showNature;
+        if (m.kind === 'people') return showPeoples;
+        return true;
+      }),
+    [markers, showEvents, showNature, showPeoples],
+  );
+
   const focus = (name: string) => {
-    setTouch(true);
     setSelected(name);
     setPanelOpen(true);
-    const p = REGION_POINTS.find((r) => r.name === name);
-    if (!p || p.offmap) { setView(homeView()); return; }
+    const m = markers.find((k) => k.title === name && k.kind === 'region');
+    if (!m) return;
     const el = stageRef.current;
     if (!el) return;
     const rect = el.getBoundingClientRect();
-    const scale = 2.6;
-    // centre the pin: translate so (x,y) lands in the middle of the stage
+    const scale = 2.2;
+    setTouched(true);
     setView({
       scale,
-      x: rect.width / 2 - p.x * (rect.width / W) * scale,
-      y: rect.height / 2 - p.y * (rect.height / H) * scale,
+      x: rect.width / 2 - m.x * (rect.width / W) * scale,
+      y: rect.height / 2 - m.y * (rect.height / H) * scale,
     });
   };
 
-  const reset = () => { setTouch(false); setView(homeView()); setSelected(null); };
+  const reset = () => { setTouched(false); setView({ scale: 1, x: 0, y: 0 }); setSelected(null); };
 
   const zoomAt = (factor: number, cx?: number, cy?: number) => {
     const el = stageRef.current;
@@ -65,7 +80,7 @@ export default function MapExplorer({ regions }: { regions: RegionDatum[] }) {
     const rect = el.getBoundingClientRect();
     const px = cx ?? rect.width / 2;
     const py = cy ?? rect.height / 2;
-    setTouch(true);
+    setTouched(true);
     setView((v) => {
       const scale = Math.min(MAX_SCALE, Math.max(MIN_SCALE, v.scale * factor));
       const k = scale / v.scale;
@@ -84,23 +99,26 @@ export default function MapExplorer({ regions }: { regions: RegionDatum[] }) {
   const onPointerDown = (e: React.PointerEvent) => {
     (e.target as Element).setPointerCapture?.(e.pointerId);
     drag.current = { x: e.clientX, y: e.clientY, vx: view.x, vy: view.y };
-    setTouch(true);
   };
   const onPointerMove = (e: React.PointerEvent) => {
     const d = drag.current;
     if (!d) return;
+    setTouched(true);
     setView((v) => ({ ...v, x: d.vx + (e.clientX - d.x), y: d.vy + (e.clientY - d.y) }));
   };
   const onPointerUp = () => { drag.current = null; };
 
-  // the initial render happens on the server, where window is undefined, so the
-  // mobile fit has to be applied after hydration
-  useEffect(() => {
-    if (window.innerWidth < 720) setView({ scale: 1, x: 0, y: 0 });
-  }, []);
+  const showTip = (e: React.MouseEvent, m: MapMarker) => {
+    const host = stageRef.current?.parentElement;
+    if (!host) return;
+    const rect = host.getBoundingClientRect();
+    const x = Math.min(Math.max(e.clientX - rect.left, 110), rect.width - 110);
+    const y = Math.min(Math.max(e.clientY - rect.top, 90), rect.height - 90);
+    setTip({ x, y, m });
+  };
 
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setSelected(null); };
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') { setSelected(null); setTip(null); } };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, []);
@@ -119,50 +137,44 @@ export default function MapExplorer({ regions }: { regions: RegionDatum[] }) {
           onPointerDown={onPointerDown}
           onPointerMove={onPointerMove}
           onPointerUp={onPointerUp}
-          onPointerLeave={onPointerUp}
+          onPointerLeave={() => { onPointerUp(); setTip(null); }}
         >
           <div
             className="map-zoom"
             style={touched ? { transform: `translate3d(${view.x}px, ${view.y}px, 0) scale(${view.scale})` } : undefined}
           >
-            <img className="map-base" src="/maps/middle-earth-organic.svg" alt="中洲地图（手工描绘版）" draggable={false} />
+            <img className="map-base" src="/maps/middle-earth-organic.svg" alt="中洲地图" draggable={false} />
             <svg className="map-overlay" viewBox={`0 0 ${W} ${H}`} aria-hidden="true">
-              {showEvents &&
-                EVENT_POINTS.map((ev) => (
-                  <g key={ev.title} className="map-event">
-                    <rect x={ev.x - 11} y={ev.y - 11} width="22" height="22" transform={`rotate(45 ${ev.x} ${ev.y})`} />
-                    <text x={ev.x + 20} y={ev.y + 8}>{ev.title}</text>
-                  </g>
-                ))}
-
-              {showNature &&
-                NATURE_POINTS.map((n) => (
-                  <g key={n.title} className={`map-nature map-nature--${n.kind}`}>
-                    <title>{n.title}</title>
-                    <circle cx={n.x} cy={n.y} r={16} />
-                    {n.kind === 'plant'
-                      ? <path d={`M${n.x} ${n.y + 9} q-9 -6 0 -17 q9 11 0 17`} />
-                      : <path d={`M${n.x} ${n.y + 9} l8 -13 l8 8 z`} />}
-                  </g>
-                ))}
-
-              {pins.map((p) => {
-                const data = byName.get(p.name);
-                const isActive = selected === p.name;
+              {visible.map((m) => {
+                const isRegion = m.kind === 'region';
+                const isActive = selected === m.title;
+                const cls = `marker marker--${m.kind}${isActive ? ' is-active' : ''}`;
                 return (
                   <g
-                    key={p.name}
-                    className={`map-pin${isActive ? ' is-active' : ''}`}
-                    onClick={(e) => { e.stopPropagation(); focus(p.name); }}
+                    key={`${m.kind}-${m.title}`}
+                    className={cls}
+                    onMouseEnter={(e) => showTip(e, m)}
+                    onMouseLeave={() => setTip(null)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (isRegion) focus(m.title);
+                      else if (m.slug) window.location.href = `/entry/${encodeURIComponent(m.slug)}/`;
+                    }}
                     role="button"
                     tabIndex={0}
-                    onKeyDown={(e) => { if (e.key === 'Enter') focus(p.name); }}
+                    onKeyDown={(e) => { if (e.key === 'Enter' && m.slug) window.location.href = `/entry/${encodeURIComponent(m.slug)}/`; }}
                   >
-                    <circle cx={p.x} cy={p.y} r={isActive ? 30 : 23} />
-                    <text x={p.x + (isActive ? 40 : 33)} y={p.y + 14}>
-                      {p.name}
-                      {data ? ` ${data.count}` : ''}
-                    </text>
+                    {isRegion && <circle cx={m.x} cy={m.y} r={isActive ? 30 : 23} />}
+                    {m.kind === 'people' && <circle cx={m.x} cy={m.y} r={14} />}
+                    {m.kind === 'event' && <rect x={m.x - 11} y={m.y - 11} width="22" height="22" transform={`rotate(45 ${m.x} ${m.y})`} />}
+                    {m.kind === 'nature' && <rect x={m.x - 9} y={m.y - 9} width="18" height="18" rx="5" />}
+                    {m.kind === 'plant' && <path d={`M${m.x} ${m.y + 11} q-11 -8 0 -21 q11 13 0 21`} />}
+                    {isRegion && (
+                      <text x={m.x + (isActive ? 40 : 33)} y={m.y + 14}>
+                        {m.title}
+                        {byName.get(m.title) ? ` ${byName.get(m.title)!.count}` : ''}
+                      </text>
+                    )}
                   </g>
                 );
               })}
@@ -170,12 +182,26 @@ export default function MapExplorer({ regions }: { regions: RegionDatum[] }) {
           </div>
         </div>
 
+        {tip && (
+          <div className="map-tip" style={{ left: tip.x, top: tip.y }}>
+            {tip.m.image && <img src={tip.m.image} alt="" />}
+            <div className="map-tip__body">
+              <strong>{tip.m.title}</strong>
+              <span className="map-tip__kind">
+                {tip.m.kind === 'region' ? '地区' : tip.m.kind === 'people' ? '住民' : tip.m.kind === 'event' ? '事件' : tip.m.kind === 'plant' ? '植物' : '生物'}
+              </span>
+              <p>{tip.m.summary || '条目库中没有这条摘要，点开查看正文。'}</p>
+            </div>
+          </div>
+        )}
+
         <div className="map-toolbar">
           <button className="icon-btn" onClick={() => zoomAt(1.3)} aria-label="放大">＋</button>
           <button className="icon-btn" onClick={() => zoomAt(0.77)} aria-label="缩小">－</button>
           <button className="icon-btn" onClick={reset} aria-label="重置视图">↺</button>
-          <button className="icon-btn" aria-pressed={showEvents} onClick={() => setShowEvents((v) => !v)} title="历史事件标记">◈</button>
-          <button className="icon-btn" aria-pressed={showNature} onClick={() => setShowNature((v) => !v)} title="风物与生物标记">❧</button>
+          <button className="icon-btn" aria-pressed={showEvents} onClick={() => setShowEvents((v) => !v)} title="历史事件">◈</button>
+          <button className="icon-btn" aria-pressed={showNature} onClick={() => setShowNature((v) => !v)} title="风物与生物">❧</button>
+          <button className="icon-btn" aria-pressed={showPeoples} onClick={() => setShowPeoples((v) => !v)} title="住民">◍</button>
           <button
             className="icon-btn map-panel-toggle"
             onClick={() => setPanelOpen((v) => !v)}
@@ -187,7 +213,7 @@ export default function MapExplorer({ regions }: { regions: RegionDatum[] }) {
           </button>
         </div>
 
-        <p className="map-hint">底图：Map of Middle-earth（手工描绘，第三方素材）· 拖拽平移 · 滚轮缩放 · 标记为叠加层</p>
+        <p className="map-hint">底图：按中洲地图矢量稿描摹重绘 · 悬停标记看条目 · 拖拽平移 · 滚轮缩放</p>
       </div>
 
       <aside className="map-side" aria-hidden={!panelOpen}>
@@ -204,7 +230,7 @@ export default function MapExplorer({ regions }: { regions: RegionDatum[] }) {
             </div>
             <p className="map-detail__meta">
               {active.count} 处地点 · 由原站分类归并
-              {REGION_POINTS.find((p) => p.name === active.name)?.offmap && ' · 不在这张地图范围内'}
+              {markers.every((m) => m.title !== active.name) && ' · 不在这张地图范围内'}
             </p>
 
             {active.people.length > 0 && (
@@ -252,7 +278,7 @@ export default function MapExplorer({ regions }: { regions: RegionDatum[] }) {
         ) : (
           <ul className="map-list">
             {list.map((r) => {
-              const off = REGION_POINTS.find((p) => p.name === r.name)?.offmap;
+              const off = markers.every((m) => m.title !== r.name);
               return (
                 <li key={r.name}>
                   <button onClick={() => focus(r.name)}>

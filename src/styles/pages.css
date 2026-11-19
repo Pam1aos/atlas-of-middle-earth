@@ -1549,3 +1549,60 @@
 }
 .agent-status[data-state='on'] { color: var(--green-deep, #3c5a28); }
 .agent-status[data-state='on'] i { background: #4f9d3a; opacity: 1; box-shadow: 0 0 0 3px rgba(79, 157, 58, 0.18); }
+/* ---------- map: wider band, plain markers, hover card ---------- */
+.map-wide { width: min(96vw, 1700px) !important; }
+.map-zoom { transform: none; }
+.map-base { filter: none; mix-blend-mode: normal; }
+
+.marker { pointer-events: auto; cursor: pointer; }
+.marker circle { fill: var(--green); stroke: #fff; stroke-width: 4; }
+.marker--people circle { fill: #7c9a5c; stroke: #fff; stroke-width: 3; }
+.marker--people { opacity: .9; }
+.marker--event rect { fill: var(--gold); stroke: #fff; stroke-width: 3; }
+.marker--nature rect { fill: var(--bark); stroke: #fff; stroke-width: 3; }
+.marker--plant path { fill: var(--green); stroke: #fff; stroke-width: 2; }
+.marker text {
+  fill: #1d3324;
+  font-size: 52px;
+  font-weight: 700;
+  font-family: var(--font-body);
+  paint-order: stroke;
+  stroke: rgba(255, 253, 246, 0.9);
+  stroke-width: 9;
+}
+.marker.is-active circle { fill: var(--ink); }
+.marker:hover circle, .marker:hover rect, .marker:hover path { fill: var(--ink); }
+
+.map-tip {
+  position: absolute;
+  z-index: 5;
+  width: 230px;
+  transform: translate(-50%, -108%);
+  background: #fffdf7;
+  border-radius: 16px;
+  box-shadow: 0 12px 32px rgba(20, 37, 26, 0.18);
+  padding: 0.5rem;
+  display: flex;
+  gap: 0.55rem;
+  pointer-events: none;
+}
+.map-tip img {
+  width: 64px;
+  height: 80px;
+  object-fit: cover;
+  border-radius: 10px;
+  flex: none;
+}
+.map-tip__body { min-width: 0; }
+.map-tip__body strong { display: block; font-size: 0.85rem; line-height: 1.2; }
+.map-tip__kind { font-size: 0.62rem; color: var(--muted); }
+.map-tip__body p {
+  margin: 0.25rem 0 0;
+  font-size: 0.7rem;
+  line-height: 1.45;
+  color: var(--ink-3);
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
