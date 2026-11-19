@@ -13,11 +13,71 @@ export interface RegionDatum {
 const W = 1000;
 const H = 1250;
 const MIN_W = 220;
+const HOME = { x: 150, y: 120, w: 780, h: 990 };
+
+/* ------------------------------------------------------------------ *
+ * Stylised coastline and terrain. Every coordinate is hand-drawn on a
+ * 1000x1250 canvas; this is a schematic, not a surveyed map.
+ * ------------------------------------------------------------------ */
+
+const COAST =
+  'M300 176 C 420 148, 566 150, 668 190 C 706 206, 720 226, 742 246 ' +
+  'C 786 258, 830 280, 854 322 C 880 378, 862 462, 842 520 ' +
+  'C 898 556, 936 634, 918 712 C 900 800, 872 878, 846 958 ' +
+  'C 822 1036, 764 1108, 682 1132 C 602 1156, 522 1138, 470 1098 ' +
+  'C 420 1060, 378 1042, 328 1022 C 278 1000, 248 940, 240 878 ' +
+  'C 232 802, 252 742, 242 680 C 232 602, 210 520, 220 462 ' +
+  'C 228 382, 250 300, 272 232 Z';
+
+const RANGES: { name: string; pts: [number, number][]; size?: number }[] = [
+  { name: 'misty', size: 1, pts: [[498, 424], [506, 452], [500, 480], [510, 508], [504, 536], [514, 564], [508, 592], [518, 620], [512, 648], [522, 676], [516, 704], [526, 732], [520, 760]] },
+  { name: 'grey', size: 0.9, pts: [[636, 296], [664, 288], [692, 296], [720, 286], [748, 296], [776, 288], [804, 300]] },
+  { name: 'iron', size: 0.75, pts: [[812, 372], [836, 380], [858, 392]] },
+  { name: 'white', size: 1, pts: [[416, 862], [446, 852], [476, 864], [506, 852], [536, 864], [566, 854], [596, 866], [626, 856]] },
+  { name: 'ephel', size: 0.85, pts: [[664, 892], [682, 918], [694, 946], [700, 976], [696, 1006], [686, 1034], [668, 1056]] },
+  { name: 'lithui', size: 0.8, pts: [[700, 862], [730, 870], [760, 862], [790, 872], [818, 866]] },
+  { name: 'blue', size: 0.85, pts: [[252, 366], [262, 394], [254, 422], [266, 450], [258, 478], [270, 506]] },
+  { name: 'angmar', size: 0.7, pts: [[560, 236], [582, 244], [604, 236]] },
+];
+
+const FORESTS: [number, number, number][] = [
+  // Mirkwood
+  [648, 372], [676, 366], [704, 374], [732, 366], [646, 404], [674, 398], [702, 406], [730, 398],
+  [644, 436], [672, 430], [700, 438], [728, 430], [642, 468], [670, 462], [698, 470], [726, 462],
+  [640, 500], [668, 494], [696, 502], [724, 494], [638, 532], [666, 526], [694, 534],
+  // Lothlórien
+  [552, 690], [568, 700], [584, 690], [560, 716], [576, 726],
+  // Fangorn
+  [470, 748], [486, 758], [502, 748], [478, 774], [494, 784],
+  // Old Forest / Chetwood
+  [352, 462], [368, 472], [384, 462], [360, 488],
+  [430, 512], [446, 522],
+  // Trollshaws
+  [438, 478], [454, 488],
+  // Druadan
+  [596, 862], [612, 872],
+];
+
+const RIVERS: { d: string; w?: number }[] = [
+  { d: 'M540 372 C 546 470, 530 560, 548 650 C 566 740, 566 830, 592 916 C 606 964, 612 1010, 618 1056', w: 3.4 },
+  { d: 'M336 470 C 322 512, 316 548, 304 584 C 296 610, 292 632, 288 654', w: 2 },
+  { d: 'M486 742 C 476 786, 470 820, 462 856', w: 2 },
+  { d: 'M744 396 C 786 440, 830 492, 868 552', w: 2 },
+  { d: 'M560 676 C 588 700, 610 730, 616 764', w: 1.6 },
+  { d: 'M700 900 C 722 906, 744 902, 766 910', w: 1.6 },
+];
+
+const LAKES: { cx: number; cy: number; rx: number; ry: number }[] = [
+  { cx: 902, cy: 566, rx: 46, ry: 38 },   // Sea of Rhûn
+  { cx: 782, cy: 1018, rx: 34, ry: 26 },  // Sea of Núrnen
+  { cx: 706, cy: 414, rx: 16, ry: 26 },   // Long Lake
+];
 
 export default function MapExplorer({ regions }: { regions: RegionDatum[] }) {
-  const [vb, setVb] = useState({ x: 40, y: 160, w: 880, h: 1000 });
+  const [vb, setVb] = useState(HOME);
   const [selected, setSelected] = useState<string | null>(null);
   const [showEvents, setShowEvents] = useState(true);
+  const [panelOpen, setPanelOpen] = useState(true);
   const [query, setQuery] = useState('');
   const drag = useRef<{ x: number; y: number; vx: number; vy: number } | null>(null);
   const svgRef = useRef<SVGSVGElement>(null);
@@ -33,13 +93,14 @@ export default function MapExplorer({ regions }: { regions: RegionDatum[] }) {
   const focus = (name: string) => {
     const p = REGION_POINTS.find((r) => r.name === name);
     setSelected(name);
+    setPanelOpen(true);
     if (!p) return;
     const w = 300;
     const h = w * (H / W);
     setVb({ x: clamp(p.x - w / 2, -100, W - w + 100), y: clamp(p.y - h / 2, -100, H - h + 100), w, h });
   };
 
-  const reset = () => { setVb({ x: 40, y: 160, w: 880, h: 1000 }); setSelected(null); };
+  const reset = () => { setVb(HOME); setSelected(null); };
 
   const zoom = (factor: number, cx?: number, cy?: number) => {
     setVb((v) => {
@@ -84,9 +145,7 @@ export default function MapExplorer({ regions }: { regions: RegionDatum[] }) {
   const onPointerUp = () => { drag.current = null; };
 
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setSelected(null);
-    };
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setSelected(null); };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, []);
@@ -96,7 +155,7 @@ export default function MapExplorer({ regions }: { regions: RegionDatum[] }) {
     .sort((a, b) => b.count - a.count);
 
   return (
-    <div className="map-window">
+    <div className="map-window" data-panel={panelOpen ? 'open' : 'closed'}>
       <div className="map-canvas">
         <svg
           ref={svgRef}
@@ -110,80 +169,79 @@ export default function MapExplorer({ regions }: { regions: RegionDatum[] }) {
           aria-label="中洲示意地图"
         >
           <defs>
-            <radialGradient id="seaGlow" cx="50%" cy="40%" r="70%">
+            <radialGradient id="seaGlow" cx="50%" cy="40%" r="72%">
               <stop offset="0%" stopColor="#dfe8d2" />
-              <stop offset="100%" stopColor="#cfdcbe" />
+              <stop offset="100%" stopColor="#c9d8b6" />
             </radialGradient>
-            <linearGradient id="landFill" x1="0" y1="0" x2="0.4" y2="1">
-              <stop offset="0%" stopColor="#f6f2e7" />
-              <stop offset="100%" stopColor="#eee8d8" />
+            <linearGradient id="landFill" x1="0.1" y1="0" x2="0.5" y2="1">
+              <stop offset="0%" stopColor="#f8f5ec" />
+              <stop offset="55%" stopColor="#f1ecdd" />
+              <stop offset="100%" stopColor="#e9e2cf" />
             </linearGradient>
+            <linearGradient id="mordorFill" x1="0" y1="0" x2="0.6" y2="1">
+              <stop offset="0%" stopColor="#c9b7a2" />
+              <stop offset="100%" stopColor="#b7a38c" />
+            </linearGradient>
+            <pattern id="waves" width="26" height="18" patternUnits="userSpaceOnUse">
+              <path d="M0 9 q6.5 -5 13 0 t13 0" fill="none" stroke="rgba(94,140,160,.16)" strokeWidth="1.1" />
+            </pattern>
           </defs>
 
-          <rect x={-400} y={-400} width={W + 800} height={H + 800} fill="url(#seaGlow)" />
+          <rect x={-500} y={-500} width={W + 1000} height={H + 1000} fill="url(#seaGlow)" />
+          <rect x={-500} y={-500} width={W + 1000} height={H + 1000} fill="url(#waves)" />
 
-          {/* overseas / sunken lands, kept faint and separate */}
+          {/* overseas / sunken lands — deliberately faint and detached */}
           <g className="map-faded">
-            <path d="M40 120c40-30 90-20 100 20s-10 90-40 130-70 60-80 30 -10-160 20-180z" />
-            <path d="M70 420c30-16 60 0 60 30s-20 70-45 74-45-30-45-56 8-40 30-48z" />
-            <path d="M60 640c50-14 100 10 96 60s-40 130-70 170-60 40-62-10 6-206 36-220z" />
-            <text x="96" y="150">阿门洲</text>
-            <text x="128" y="560">努门诺尔</text>
-            <text x="132" y="700">贝烈瑞安德</text>
+            <path d="M40 128c34-26 84-16 92 22s-14 92-42 128-66 44-74 12 0-142 24-162z" />
+            <path d="M74 428c28-14 54 2 54 30s-18 66-42 70-42-28-42-52 8-38 30-48z" />
+            <path d="M64 636c46-12 92 8 88 56s-38 124-66 162-56 38-58-10 6-196 36-208z" />
+            <text x="110" y="176">阿门洲</text>
+            <text x="150" y="566">努门诺尔</text>
+            <text x="150" y="706">贝烈瑞安德</text>
           </g>
 
-          {/* main landmass */}
-          <path
-            className="map-land"
-            d="M258 300 Q 420 196 620 236 Q 800 268 848 452 Q 884 612 830 780 Q 790 936 700 1030 Q 610 1124 480 1112 Q 330 1098 262 964 Q 208 852 226 700 Q 244 540 236 420 Q 232 348 258 300 Z"
-          />
-          {/* misty mountains */}
-          <g className="map-ridge">
-            {Array.from({ length: 9 }).map((_, i) => (
-              <path key={i} d={`M${498 + i * 4} ${500 + i * 26}l14 22h-28z`} />
+          {/* landmass */}
+          <path className="map-land" d={COAST} />
+          {/* Mordor basin */}
+          <path className="map-mordor" d="M676 890 C 736 862, 800 876, 822 916 C 844 956, 826 1010, 776 1032 C 726 1054, 672 1036, 660 998 C 650 962, 650 912, 676 890 Z" />
+
+          {/* lakes */}
+          <g className="map-lake">
+            {LAKES.map((l, i) => (
+              <ellipse key={i} cx={l.cx} cy={l.cy} rx={l.rx} ry={l.ry} />
             ))}
           </g>
-          {/* grey mountains (north-east) */}
-          <g className="map-ridge">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <path key={`g${i}`} d={`M${640 + i * 26} ${470}l13 20h-26z`} />
+
+          {/* rivers */}
+          <g className="map-river">
+            {RIVERS.map((r, i) => (
+              <path key={i} d={r.d} strokeWidth={r.w || 2} />
             ))}
           </g>
-          {/* blue mountains (west) */}
-          <g className="map-ridge">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <path key={`b${i}`} d={`M${300 + i * 4} ${400 + i * 26}l11 17h-22z`} />
-            ))}
-          </g>
-          {/* white mountains */}
-          <g className="map-ridge">
-            {Array.from({ length: 7 }).map((_, i) => (
-              <path key={i} d={`M${470 + i * 30} ${852}l12 18h-24z`} />
-            ))}
-          </g>
-          {/* mirkwood + lothlorien + fangorn */}
+
+          {/* forests */}
           <g className="map-forest">
-            {Array.from({ length: 14 }).map((_, i) => (
-              <circle key={`m${i}`} cx={676 + (i % 3) * 22} cy={560 + Math.floor(i / 3) * 30} r={9} />
-            ))}
-            {Array.from({ length: 6 }).map((_, i) => (
-              <circle key={`l${i}`} cx={556 + (i % 3) * 16} cy={690 + Math.floor(i / 3) * 18} r={7} />
-            ))}
-            {Array.from({ length: 6 }).map((_, i) => (
-              <circle key={`f${i}`} cx={468 + (i % 3) * 16} cy={742 + Math.floor(i / 3) * 18} r={7} />
+            {FORESTS.map(([cx, cy], i) => (
+              <circle key={i} cx={cx} cy={cy} r={7.5} />
             ))}
           </g>
-          {/* anduin */}
-          <path className="map-river" d="M520 380c10 80-30 150-10 230s30 150 10 240-10 120 0 180" />
-          {/* mordor */}
-          <path className="map-mordor" d="M690 940c40-20 90-10 100 30s10 80-30 96-90 10-96-30 6-80 26-96z" />
 
-          {/* soft tinted halos give the landmass some structure */}
+          {/* mountain ranges */}
+          <g className="map-ridge">
+            {RANGES.map((range) =>
+              range.pts.map(([x, y], i) => {
+                const s = 15 * (range.size || 1);
+                return <path key={`${range.name}-${i}`} d={`M${x - s / 2} ${y} L${x} ${y - s} L${x + s / 2} ${y} Z`} />;
+              }),
+            )}
+          </g>
+
+          {/* soft region halos for orientation */}
           <g className="map-halo">
             <ellipse cx={348} cy={506} rx={78} ry={58} fill="#7fa25b" />
-            <ellipse cx={560} cy={800} rx={92} ry={70} fill="#c8a86a" />
-            <ellipse cx={588} cy={936} rx={86} ry={64} fill="#8fa878" />
-            <ellipse cx={748} cy={978} rx={86} ry={72} fill="#8a6a52" />
+            <ellipse cx={540} cy={800} rx={92} ry={70} fill="#c8a86a" />
+            <ellipse cx={588} cy={938} rx={86} ry={64} fill="#8fa878" />
+            <ellipse cx={746} cy={962} rx={86} ry={72} fill="#8a6a52" />
             <ellipse cx={730} cy={614} rx={92} ry={70} fill="#6f8f4f" />
             <ellipse cx={382} cy={420} rx={96} ry={74} fill="#9db77f" />
           </g>
@@ -232,12 +290,21 @@ export default function MapExplorer({ regions }: { regions: RegionDatum[] }) {
           >
             ◈
           </button>
+          <button
+            className="icon-btn map-panel-toggle"
+            onClick={() => setPanelOpen((v) => !v)}
+            aria-expanded={panelOpen}
+            aria-label={panelOpen ? '收起地区栏' : '展开地区栏'}
+            title={panelOpen ? '收起地区栏' : '展开地区栏'}
+          >
+            {panelOpen ? '⟩' : '⟨'}
+          </button>
         </div>
 
-        <p className="map-hint">示意地图：位置按相对方位手工标注，不是精确坐标 · 拖拽平移 · 滚轮缩放</p>
+        <p className="map-hint">示意地图：海岸、山脉、河流按相对方位手工绘制，不是精确坐标 · 拖拽平移 · 滚轮缩放</p>
       </div>
 
-      <aside className="map-side">
+      <aside className="map-side" aria-hidden={!panelOpen}>
         <header>
           <h3>地区</h3>
           <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="筛选地区…" aria-label="筛选地区" />

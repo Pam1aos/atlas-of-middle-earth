@@ -155,7 +155,7 @@ export function buildAnswer(
   } else {
     blocks.push({
       kind: 'note',
-      text: '深入模式在这里是沿着关系图谱做的关联展开，没有调用语言模型；在设置里填入 API Key 后可以让大模型把这段材料写成连贯的解读。',
+      text: '深入模式沿关系图谱做一跳、两跳的关联展开，只使用本地条目与关系，不调用语言模型。',
     });
   }
 

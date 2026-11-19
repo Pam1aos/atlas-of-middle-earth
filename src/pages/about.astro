@@ -24,13 +24,13 @@ const REL_LABEL: Record<string, string> = {
   correspondence: '通信', director: '导演', actor: '主演',
 };
 ---
-<Base title="关于" description="中洲志的数据来源、覆盖范围、结构化方法与已知局限，以及数据质量报告。">
+<Base title="关于" description="中洲志的资料来源与数据质量报告。">
   <section class="wrap" style="padding-top:clamp(2rem,4vw,3rem)">
     <div class="eyebrow">About & sources</div>
     <h1 style="font-size:clamp(2rem,4vw,3rem);margin-top:.5rem">关于这份档案</h1>
     <p class="lede" style="margin-top:.8rem">
       这是一个个人非商业项目，把魔戒中文维基的内容整理成可检索、可漫游的静态站点。
-      它不是官方百科，也不试图替代原站：每一条内容都能顺着来源链接回到维基。
+      它不是官方百科，也不试图替代原站。
     </p>
   </section>
 
@@ -38,27 +38,18 @@ const REL_LABEL: Record<string, string> = {
     <div class="section-head">
       <div>
         <div class="eyebrow">Source</div>
-        <h2 style="font-size:1.6rem">数据来自哪里</h2>
+        <h2 style="font-size:1.6rem">原始来源</h2>
       </div>
     </div>
-    <div class="coverage">
-      <div>
-        <h4>原始来源</h4>
-        <p>魔戒中文维基（灰机 wiki）：<a href="https://lotr.huijiwiki.com/wiki/%E9%A6%96%E9%A1%B5" target="_blank" rel="noopener noreferrer">lotr.huijiwiki.com</a>。
-          条目正文与图片版权归原站贡献者与原作者所有，原站内容以 CC BY-SA 协议授权。</p>
-      </div>
-      <div>
-        <h4>抓取方式</h4>
-        <p>通过 MediaWiki API 获取渲染后的正文 HTML（模板已展开），再转换为 Markdown 与结构化数据。快照时间 2026-11-18。</p>
-      </div>
-      <div>
-        <h4>收录范围</h4>
-        <p>主命名空间的全部 {fmt(stats.entities)} 个条目。不含模板、分类、帮助、用户页、讨论页与博客文章。</p>
-      </div>
-      <div>
-        <h4>更新方式</h4>
-        <p>重新抓取原始数据后执行 <code>node scripts/build-data.mjs</code> 与 <code>npm run build</code>，站点按新快照整体重建。</p>
-      </div>
+    <div class="prose" style="max-width:72ch">
+      <p>
+        全部条目与图片来自魔戒中文维基（灰机 wiki）：<a href="https://lotr.huijiwiki.com/wiki/%E9%A6%96%E9%A1%B5" target="_blank" rel="noopener noreferrer">lotr.huijiwiki.com</a>。
+        数据快照时间为 2026-11-18，共 {fmt(stats.entities)} 个条目。
+      </p>
+      <p>
+        条目文字与图片版权归魔戒中文维基贡献者及原作者所有，原站内容以 CC BY-SA 协议授权；
+        本站只做整理、检索与可视化，如需转载或再利用请遵循原站授权条款。
+      </p>
     </div>
   </section>
 
@@ -85,7 +76,7 @@ const REL_LABEL: Record<string, string> = {
         <h3 style="font-size:1rem;margin-bottom:.6rem">实体分布</h3>
         <table style="width:100%;font-size:.86rem;border-collapse:collapse">
           {typeRows.map(([t, n]) => (
-            <tr><td style="padding:.2rem 0;color:var(--bark)">{TYPE_LABEL[t] || t}</td><td style="text-align:right;font-variant-numeric:tabular-nums">{fmt(n)}</td></tr>
+            <tr><td style="padding:.2rem 0;color:var(--muted)">{TYPE_LABEL[t] || t}</td><td style="text-align:right;font-variant-numeric:tabular-nums">{fmt(n)}</td></tr>
           ))}
         </table>
       </div>
@@ -93,7 +84,7 @@ const REL_LABEL: Record<string, string> = {
         <h3 style="font-size:1rem;margin-bottom:.6rem">关系分布</h3>
         <table style="width:100%;font-size:.86rem;border-collapse:collapse">
           {relRows.map(([t, n]) => (
-            <tr><td style="padding:.2rem 0;color:var(--bark)">{REL_LABEL[t] || t}</td><td style="text-align:right;font-variant-numeric:tabular-nums">{fmt(n)}</td></tr>
+            <tr><td style="padding:.2rem 0;color:var(--muted)">{REL_LABEL[t] || t}</td><td style="text-align:right;font-variant-numeric:tabular-nums">{fmt(n)}</td></tr>
           ))}
         </table>
       </div>
@@ -107,108 +98,6 @@ const REL_LABEL: Record<string, string> = {
           <li>缺少原始链接：<strong>{stats.noSource}</strong></li>
           <li>引用图片但文件缺失：<strong>{stats.missingImageFiles}</strong></li>
         </ul>
-      </div>
-    </div>
-  </section>
-
-  <section class="section wrap" id="method">
-    <div class="section-head">
-      <div>
-        <div class="eyebrow">Method</div>
-        <h2 style="font-size:1.6rem">怎么把正文变成事实</h2>
-      </div>
-    </div>
-    <div class="prose" style="max-width:76ch">
-      <p>
-        维基的信息框是一张两列表格：左边是字段名，右边是值，值里通常带着指向其他条目的链接。
-        构建脚本逐行读取这些表格，只保留“字段名能映射到明确关系类型、且值里含有指向现存条目的链接”的行，
-        于是每条关系都带着它的出处——例如“信息框 · 父亲”。
-      </p>
-      <p>
-        正文里的超链接<strong>不会</strong>自动变成事实关系。它们被单独统计为“被引用次数”，用于排序和推荐，
-        但不会进入图谱，因为“某段文字提到过某人”不等于“两人存在某种设定关系”。
-      </p>
-      <p>
-        关系类型包括：父母、子嗣、配偶、兄弟姐妹、家族、种族、文化、头衔、位于、包含、住民、
-        发生地点、相关事件、成员、所有者、制造者、领袖、出现于作品、导演、主演、通信。
-      </p>
-    </div>
-  </section>
-
-  <section class="section wrap" id="limits">
-    <div class="section-head">
-      <div>
-        <div class="eyebrow">Limitations</div>
-        <h2 style="font-size:1.6rem">已知缺失与限制</h2>
-      </div>
-    </div>
-    <div class="coverage">
-      <div>
-        <h4>没有地图坐标</h4>
-        <p>数据里没有可信的经纬度，因此本站不做地理地图，只用地区层级与列表表达归属关系。</p>
-      </div>
-      <div>
-        <h4>缺图 {fmt(noImage)} 条</h4>
-        <p>这些条目在原站就没有插图，本站使用统一的中性占位，不使用 AI 生成的假肖像。</p>
-      </div>
-      <div>
-        <h4>年代精度不一</h4>
-        <p>多数事件只有年份，没有月日；不同纪元的年份不可直接比较，因此按纪元分轴展示。</p>
-      </div>
-      <div>
-        <h4>分类是推断的</h4>
-        <p>实体类型（人物 / 地点 / 势力 …）由所在章节与分类关键词自动判定，个别条目可能落在相邻类型。</p>
-      </div>
-      <div>
-        <h4>原站的瑕疵会保留</h4>
-        <p>原站个别条目存在 Lua 报错、未填模板参数或断链，本站如实保留，不做补写。</p>
-      </div>
-      <div>
-        <h4>改编与原著未强行合并</h4>
-        <p>影视改编条目的信息来自原站对应页面，不与原著设定合并叙述。</p>
-      </div>
-    </div>
-  </section>
-
-  <section class="section wrap" id="credits">
-    <div class="section-head">
-      <div>
-        <div class="eyebrow">Credits</div>
-        <h2 style="font-size:1.6rem">图片署名</h2>
-      </div>
-    </div>
-    <div class="prose" style="max-width:76ch">
-      <p>
-        站内全部插图来自魔戒中文维基的文件页，多为托尔金原作插画、Alan Lee、John Howe、Ted Nasmith 等艺术家的作品，
-        以及电影剧照与书封。文件名为原站文件名（含作者信息），可在条目页的“来源”处回到对应维基页面查看完整授权说明。
-        图片仅作个人学习展示，版权归各原作者所有。
-      </p>
-    </div>
-  </section>
-
-  <section class="section wrap" id="deploy">
-    <div class="section-head">
-      <div>
-        <div class="eyebrow">Build</div>
-        <h2 style="font-size:1.6rem">技术栈与部署</h2>
-      </div>
-    </div>
-    <div class="coverage">
-      <div>
-        <h4>技术</h4>
-        <p>Astro 静态生成 + React 交互岛 + Cytoscape.js 图谱；构建时产出纯静态文件，运行时不连接任何数据库或接口。</p>
-      </div>
-      <div>
-        <h4>本地命令</h4>
-        <p><code>npm install</code> → <code>npm run build</code> → <code>npm run preview</code></p>
-      </div>
-      <div>
-        <h4>Vercel 配置</h4>
-        <p>Framework: Astro；Build: <code>npm run build</code>；Output: <code>dist</code>；Node 20+；无需环境变量（可选 <code>SITE_URL</code>）。</p>
-      </div>
-      <div>
-        <h4>页面数</h4>
-        <p>{fmt(stats.entities)} 个条目页 + 地区页 + 索引页，全部在构建时生成，可被直接分享与刷新。</p>
       </div>
     </div>
   </section>
