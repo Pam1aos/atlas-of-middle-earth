@@ -78,7 +78,7 @@ export default function MapExplorer({ regions }: { regions: RegionDatum[] }) {
     const el = stageRef.current;
     if (!el) return;
     const rect = el.getBoundingClientRect();
-    zoomAt(e.deltaY > 0 ? 1.15 : 0.87, e.clientX - rect.left, e.clientY - rect.top);
+    zoomAt(e.deltaY > 0 ? 0.87 : 1.15, e.clientX - rect.left, e.clientY - rect.top);
   };
 
   const onPointerDown = (e: React.PointerEvent) => {
@@ -125,7 +125,7 @@ export default function MapExplorer({ regions }: { regions: RegionDatum[] }) {
             className="map-zoom"
             style={touched ? { transform: `translate3d(${view.x}px, ${view.y}px, 0) scale(${view.scale})` } : undefined}
           >
-            <img className="map-base" src="/maps/middle-earth.svg" alt="中洲地图（手工描绘版）" draggable={false} />
+            <img className="map-base" src="/maps/middle-earth-organic.svg" alt="中洲地图（手工描绘版）" draggable={false} />
             <svg className="map-overlay" viewBox={`0 0 ${W} ${H}`} aria-hidden="true">
               {showEvents &&
                 EVENT_POINTS.map((ev) => (
@@ -171,8 +171,8 @@ export default function MapExplorer({ regions }: { regions: RegionDatum[] }) {
         </div>
 
         <div className="map-toolbar">
-          <button className="icon-btn" onClick={() => zoomAt(0.75)} aria-label="放大">＋</button>
-          <button className="icon-btn" onClick={() => zoomAt(1.33)} aria-label="缩小">－</button>
+          <button className="icon-btn" onClick={() => zoomAt(1.3)} aria-label="放大">＋</button>
+          <button className="icon-btn" onClick={() => zoomAt(0.77)} aria-label="缩小">－</button>
           <button className="icon-btn" onClick={reset} aria-label="重置视图">↺</button>
           <button className="icon-btn" aria-pressed={showEvents} onClick={() => setShowEvents((v) => !v)} title="历史事件标记">◈</button>
           <button className="icon-btn" aria-pressed={showNature} onClick={() => setShowNature((v) => !v)} title="风物与生物标记">❧</button>

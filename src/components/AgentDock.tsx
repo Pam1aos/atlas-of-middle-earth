@@ -17,6 +17,7 @@ export default function AgentDock() {
   const [messages, setMessages] = useState<Msg[]>([]);
   const [sources, setSources] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
+  const [sourcesOpen, setSourcesOpen] = useState(true);
 
   const recsRef = useRef<Map<string, AgentRec> | null>(null);
   const indexRef = useRef<SearchRow[] | null>(null);
@@ -132,7 +133,7 @@ export default function AgentDock() {
       </button>
 
       {open && (
-        <div className="agent-shell" role="dialog" aria-label="资料助手">
+        <div className="agent-shell" data-sources={sourcesOpen ? 'open' : 'closed'} role="dialog" aria-label="资料助手">
           <aside className="agent-sources" aria-label="原文依据">
             <header>
               <h3>原文依据</h3>
@@ -170,6 +171,14 @@ export default function AgentDock() {
                 <span>{mode === 'brief' ? '精简模式' : '深入模式'}</span>
               </div>
               <div className="agent-head-actions">
+                <button
+                  className="agent-icon"
+                  onClick={() => setSourcesOpen((v) => !v)}
+                  title={sourcesOpen ? '收起原文依据' : '展开原文依据'}
+                  aria-pressed={sourcesOpen}
+                >
+                  依据
+                </button>
                 <button className="agent-icon" onClick={() => setGraphOpen(true)} title="打开关系图谱">图谱</button>
                 <button className="agent-icon" onClick={() => { setMessages([]); setSources([]); }} title="清空对话">清空</button>
                 <button className="agent-icon" onClick={() => setOpen(false)} title="关闭">✕</button>

@@ -1475,8 +1475,7 @@
   width: 100%;
   height: auto;
   user-select: none;
-  filter: sepia(0.42) saturate(0.72) hue-rotate(52deg) brightness(1.02) contrast(0.9);
-  mix-blend-mode: multiply;
+  /* palette is baked into the traced SVG, no filter needed */
 }
 .map-overlay {
   position: absolute;
@@ -1520,3 +1519,12 @@
 .map-nature { pointer-events: auto; cursor: help; }
 
 .map-off { font-size: 0.62rem; color: var(--muted); font-style: normal; margin-left: 0.2rem; }
+/* sources panel collapse */
+.agent-shell[data-sources='closed'] .agent-sources { display: none; }
+.agent-shell[data-sources='closed'] { grid-template-columns: minmax(0, 460px); }
+@media (max-width: 900px) {
+  .agent-shell[data-sources='closed'] {
+    grid-template-columns: 1fr;
+    grid-template-rows: minmax(0, 1fr);
+  }
+}
