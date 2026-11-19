@@ -1,6 +1,6 @@
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { AgentRec, Block, SearchRow } from '../lib/agent';
-import { buildAnswer, buildLookup, resolveQuery, typeLabel } from '../lib/agent';
+import { buildAnswer, buildContext, buildLookup, resolveQuery, typeLabel } from '../lib/agent';
 
 const GraphApp = lazy(() => import('./GraphApp.tsx'));
 
@@ -83,6 +83,30 @@ export default function AgentDock() {
     const answer = buildAnswer(question, slug, mode, recs);
     push({ role: 'agent', blocks: answer.blocks });
     setSources(answer.sources);
+
+    // deep mode optionally hands the retrieved material to /api/ask, where the
+    // model key lives in Vercel environment variables (never in the browser)
+    if (mode === 'deep' && slug) {
+      try {
+        const rec = recs.get(slug)!;
+        const res = await fetch('/api/ask', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ question, context: buildContext(rec, recs) }),
+        });
+        if (res.status === 501) {
+          push({ role: 'agent', blocks: [{ kind: 'note', text: '服务端未配置模型 Key，以上为本地检索结果。' }] });
+        } else if (!res.ok) {
+          const data = await res.json().catch(() => ({}));
+          push({ role: 'agent', blocks: [{ kind: 'note', text: `模型服务返回错误（${data.error || res.status}），以上为本地检索结果。` }] });
+        } else {
+          const data = await res.json();
+          if (data.text) push({ role: 'agent', blocks: [{ kind: 'h', text: '模型整合' }, { kind: 'p', text: data.text }] });
+        }
+      } catch {
+        push({ role: 'agent', blocks: [{ kind: 'note', text: '模型服务不可用，以上为本地检索结果。' }] });
+      }
+    }
 
     setBusy(false);
   }, [mode]);

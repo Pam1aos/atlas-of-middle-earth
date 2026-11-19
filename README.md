@@ -138,6 +138,25 @@ node scripts/shot.mjs            # 用 CDP 驱动 Edge 截图（见 screenshots/
 - **首页主视觉**：左侧是眉标、巨型标题、正文与胶囊入口；右侧是一张浮起的白卡，内部左为有机色块 + 椭圆裁切的人物图，右为堆叠的数据块（条目 / 关系 / 纪元），对应参考图的 "PRIMARY MOVE / SURFACE BEHAVIOR / VISUAL SIGNATURE" 结构。
 - **组件语言**：胶囊按钮与筛选 chip、圆点类型标识、方形图标的类型入口、悬浮卡片列表。
 - **动效**：只在 hover 抬升与图谱布局时出现，全部被 `prefers-reduced-motion` 关闭。
+## 服务端函数（可选的大模型整合）
+
+站点主体仍是预渲染的静态页面，只有 `/api/ask` 一个路由按需运行（`prerender = false`），
+用来在没有把 Key 暴露给浏览器的前提下调用模型。构建适配器为 `@astrojs/vercel`。
+
+在 Vercel 项目的 Settings → Environment Variables 里配置：
+
+| 变量 | 必填 | 说明 |
+| --- | --- | --- |
+| `AGENT_API_KEY` | 是（不填则关闭该功能） | 模型服务的 Key，只存在服务端 |
+| `AGENT_BASE_URL` | 否 | 兼容 OpenAI 的接口地址，默认 `https://api.openai.com/v1` |
+| `AGENT_MODEL` | 否 | 默认 `gpt-4o-mini` |
+| `SITE_URL` | 否 | 正式域名，用于 canonical 与 sitemap |
+
+未配置 `AGENT_API_KEY` 时，`/api/ask` 返回 501，资料助手只给出本地检索结果，不会报错。
+改动环境变量后需要在 Vercel 上 Redeploy 一次。
+
+构建产物：静态文件在 `dist/client`，Vercel 函数与路由清单在 `.vercel/output`；
+Vercel 会读取 `.vercel/output`，本地预览可用 `node scripts/serve.mjs`（自动指向 `dist/client`）。
 ## 已知限制
 
 - 没有可信坐标，所以**没有地图**；地理页是分类层级，不是示意图伪装的真实地图。

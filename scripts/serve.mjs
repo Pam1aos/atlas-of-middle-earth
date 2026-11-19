@@ -4,7 +4,11 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const ROOT = path.resolve('dist');
+const ROOT = fs.existsSync(path.resolve('dist/client'))
+  ? path.resolve('dist/client')
+  : fs.existsSync(path.resolve('.vercel/output/static'))
+    ? path.resolve('.vercel/output/static')
+    : path.resolve('dist');
 const PORT = Number(process.env.PORT || 4321);
 const MIME = {
   '.html': 'text/html; charset=utf-8',

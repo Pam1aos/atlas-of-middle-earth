@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { REGION_POINTS, EVENT_POINTS } from '../lib/mapPoints';
+import { REGION_POINTS, EVENT_POINTS, REGION_AREAS, NATURE_POINTS } from '../lib/mapPoints';
 
 export interface RegionDatum {
   name: string;
@@ -205,6 +205,13 @@ export default function MapExplorer({ regions }: { regions: RegionDatum[] }) {
           {/* Mordor basin */}
           <path className="map-mordor" d="M676 890 C 736 862, 800 876, 822 916 C 844 956, 826 1010, 776 1032 C 726 1054, 672 1036, 660 998 C 650 962, 650 912, 676 890 Z" />
 
+          {/* regional divisions */}
+          <g className="map-area">
+            {REGION_AREAS.map((a) => (
+              <path key={a.name} d={a.d} fill={a.color} />
+            ))}
+          </g>
+
           {/* lakes */}
           <g className="map-lake">
             {LAKES.map((l, i) => (
@@ -253,6 +260,18 @@ export default function MapExplorer({ regions }: { regions: RegionDatum[] }) {
                 <text x={ev.x + 10} y={ev.y + 4}>{ev.title}</text>
               </g>
             ))}
+
+          <g className="map-nature">
+            {NATURE_POINTS.map((n) => (
+              <g key={n.title} className={`map-nature__${n.kind}`}>
+                <title>{n.title}</title>
+                <circle cx={n.x} cy={n.y} r={7} />
+                {n.kind === 'plant'
+                  ? <path d={`M${n.x} ${n.y + 4} q-4 -3 0 -7 q4 4 0 7`} />
+                  : <path d={`M${n.x} ${n.y + 4} l3 -5 l3 3 z`} />}
+              </g>
+            ))}
+          </g>
 
           {points.map((p) => {
             const data = byName.get(p.name);

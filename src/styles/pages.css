@@ -1366,6 +1366,11 @@
 .map-ridge path { fill: rgba(107,85,67,.34); }
 .map-forest circle { fill: rgba(79,122,52,.35); }
 .map-river path { fill: none; stroke: rgba(94,140,160,.55); stroke-linecap: round; }
+.map-area path { opacity: .34; stroke: rgba(79,122,52,.22); stroke-width: 1; stroke-dasharray: 5 6; }
+.map-nature circle { fill: rgba(255,255,255,.85); stroke: rgba(79,122,52,.55); stroke-width: 1.2; }
+.map-nature path { fill: var(--green); opacity: .8; }
+.map-nature__beast path { fill: var(--bark); }
+.map-nature g { cursor: help; }
 .map-lake ellipse { fill: rgba(139,175,186,.42); stroke: rgba(94,140,160,.35); stroke-width: 1; }
 .map-mordor { fill: rgba(107,85,67,.18); stroke: rgba(107,85,67,.3); stroke-width: 1.2; }
 
