@@ -1528,3 +1528,24 @@
     grid-template-rows: minmax(0, 1fr);
   }
 }
+/* model connection indicator */
+.agent-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  margin-left: 0.5rem;
+  padding: 0.12rem 0.5rem 0.12rem 0.4rem;
+  border-radius: 999px;
+  background: var(--surface-2, #eef2e6);
+  font-size: 0.66rem;
+  color: var(--muted);
+}
+.agent-status i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--muted);
+  opacity: 0.6;
+}
+.agent-status[data-state='on'] { color: var(--green-deep, #3c5a28); }
+.agent-status[data-state='on'] i { background: #4f9d3a; opacity: 1; box-shadow: 0 0 0 3px rgba(79, 157, 58, 0.18); }

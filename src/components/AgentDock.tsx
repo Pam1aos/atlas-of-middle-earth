@@ -18,6 +18,7 @@ export default function AgentDock() {
   const [sources, setSources] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
   const [sourcesOpen, setSourcesOpen] = useState(true);
+  const [serverState, setServerState] = useState<'unknown' | 'on' | 'off'>('unknown');
 
   const recsRef = useRef<Map<string, AgentRec> | null>(null);
   const indexRef = useRef<SearchRow[] | null>(null);
@@ -47,6 +48,16 @@ export default function AgentDock() {
   useEffect(() => {
     if (!open) setGraphOpen(false);
   }, [open]);
+
+  // ask the server once whether a model key is configured
+  useEffect(() => {
+    let alive = true;
+    fetch('/api/ask')
+      .then((r) => r.json())
+      .then((d) => { if (alive) setServerState(d?.configured ? 'on' : 'off'); })
+      .catch(() => { if (alive) setServerState('off'); });
+    return () => { alive = false; };
+  }, []);
 
   useEffect(() => {
     if (!open || recsRef.current) return;
@@ -85,15 +96,19 @@ export default function AgentDock() {
     push({ role: 'agent', blocks: answer.blocks });
     setSources(answer.sources);
 
-    // deep mode optionally hands the retrieved material to /api/ask, where the
-    // model key lives in Vercel environment variables (never in the browser)
-    if (mode === 'deep' && slug) {
+    // both modes hand the retrieved material to /api/ask, where the model key
+    // lives in Vercel environment variables (never in the browser)
+    {
       try {
-        const rec = recs.get(slug)!;
+        const rec = slug ? recs.get(slug) : null;
         const res = await fetch('/api/ask', {
           method: 'POST',
           headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({ question, context: buildContext(rec, recs) }),
+          body: JSON.stringify({
+            question,
+            context: rec ? buildContext(rec, recs) : '',
+            mode,
+          }),
         });
         if (res.status === 501) {
           push({ role: 'agent', blocks: [{ kind: 'note', text: '服务端未配置模型 Key，以上为本地检索结果。' }] });
@@ -169,6 +184,10 @@ export default function AgentDock() {
               <div>
                 <strong>资料助手</strong>
                 <span>{mode === 'brief' ? '精简模式' : '深入模式'}</span>
+                <span className="agent-status" data-state={serverState} title={serverState === 'on' ? '模型已连接，回答会经服务端整合' : '未配置模型，只做本地检索'}>
+                  <i aria-hidden="true" />
+                  {serverState === 'on' ? '模型在线' : serverState === 'off' ? '本地检索' : '检测中'}
+                </span>
               </div>
               <div className="agent-head-actions">
                 <button
