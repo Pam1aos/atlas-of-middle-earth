@@ -3,6 +3,7 @@ import '../styles/global.css';
 import '../styles/pages.css';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
+import AgentDock from '../components/AgentDock.tsx';
 import { SITE } from '../lib/site';
 
 interface Props {
@@ -56,5 +57,6 @@ const ogImage = image ? new URL(image, Astro.site ?? SITE.url).href : undefined;
       <slot />
     </main>
     {!hideFooter && <Footer />}
+    <AgentDock client:idle />
   </body>
 </html>

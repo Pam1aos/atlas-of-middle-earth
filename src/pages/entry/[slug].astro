@@ -97,7 +97,7 @@ const dateLine = (e.dates || []).map((d: any) => `${d.label}：${d.text}`).slice
             </div>
             <p class="muted" style="font-size:.76rem;margin-top:.6rem">
               以上关系均由条目信息框字段推导，鼠标悬停可查看具体字段。
-              <a href={`/graph/?focus=${encodeURIComponent(e.slug)}`}>在完整图谱中查看 →</a>
+              <button class="link-btn" data-graph-focus={e.slug}>在完整图谱中查看 →</button>
             </p>
           </section>
         )}
@@ -170,12 +170,12 @@ const dateLine = (e.dates || []).map((d: any) => `${d.label}：${d.text}`).slice
         {ego.nodes.length > 1 && (
           <div class="side-card" style="padding:.6rem">
             <h3 style="padding:.5rem .5rem 0">关系图谱</h3>
-            <div style="height:260px;border-radius:14px;overflow:hidden;background:var(--paper-2)">
+            <div style="height:260px;border-radius:14px;overflow:hidden;background:var(--surface-3)">
               <MiniGraph client:visible data={ego} height="260px" layout="concentric" />
             </div>
-            <a class="btn btn--ghost" style="width:100%;margin-top:.5rem" href={`/graph/?focus=${encodeURIComponent(e.slug)}`}>
-              展开探索
-            </a>
+              <button class="btn btn--ghost" style="width:100%;margin-top:.5rem" data-graph-focus={e.slug}>展开探索</button>
+
+
           </div>
         )}
 

@@ -112,7 +112,10 @@ for (const s of shots) {
       clip: { x: 0, y: 0, width: s.w, height: Math.min(4200, Math.max(s.h, h)), scale: 1 },
     };
   }
+  // sticky headers paint at the scroll offset in beyond-viewport captures
+  await cdp.evaluate("(() => { const h = document.querySelector('.site-header'); if (h) h.style.position = 'static'; })()").catch(() => {});
   const { data } = await cdp.send('Page.captureScreenshot', capture);
+  await cdp.evaluate("(() => { const h = document.querySelector('.site-header'); if (h) h.style.position = ''; })()").catch(() => {});
   fs.writeFileSync(path.join(OUT, `${s.name}.png`), Buffer.from(data, 'base64'));
   console.log('shot', s.name);
 

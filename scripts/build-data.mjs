@@ -439,6 +439,28 @@ const ego = (center, hops = 1, cap = 46) => {
   };
 };
 fs.writeFileSync(path.resolve('public/data/home-graph.json'), JSON.stringify(ego(hero, 1, 30)));
+// ---------------- agent corpus (lazy loaded by the chat widget) ----------------
+const adj = new Map();
+for (const r of kept) {
+  if (!adj.has(r.s)) adj.set(r.s, []);
+  if (!adj.has(r.t)) adj.set(r.t, []);
+  adj.get(r.s).push({ other: r.t, label: r.label, dir: 'out' });
+  adj.get(r.t).push({ other: r.s, label: r.label, dir: 'in' });
+}
+const stripHtml = (h) => h.replace(/<[^>]+>/g, '').replace(/&[a-z]+;/gi, ' ').replace(/\s+/g, ' ').trim();
+
+const agent = entities.map((e) => ({
+  s: e.slug,
+  t: e.title,
+  e: e.english || '',
+  ty: e.type,
+  er: e.era || '',
+  su: (e.summary || '').slice(0, 160),
+  f: (e.factGroups || []).flatMap((g) => g.rows).slice(0, 5).map((r) => `${r.label}|${r.text.slice(0, 70)}`),
+  r: (adj.get(e.slug) || []).slice(0, 8).map((x) => `${x.other}|${x.label}|${x.dir}`),
+}));
+fs.writeFileSync(path.resolve('public/data/agent.json'), JSON.stringify(agent));
+console.log('agent corpus bytes:', JSON.stringify(agent).length);
 
 // search index
 const search = entities.map((e) => [e.slug, e.title, e.english, e.aliases.join('|'), e.type]);

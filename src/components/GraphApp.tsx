@@ -30,7 +30,7 @@ function bfs(start: string, depth: number, edges: GEdge[], relFilter: Set<string
   return { nodes: seen, edges: used };
 }
 
-export default function GraphApp({ entities }: { entities: EntityLite[] }) {
+export default function GraphApp({ entities, initialFocus }: { entities: EntityLite[]; initialFocus?: string | null }) {
   const [graph, setGraph] = useState<Graph | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
@@ -72,11 +72,11 @@ export default function GraphApp({ entities }: { entities: EntityLite[] }) {
   // ---------- initial params ----------
   useEffect(() => {
     const p = new URLSearchParams(window.location.search);
-    const f = p.get('focus');
+    const f = initialFocus || p.get('focus');
     if (f && ent.has(f)) { setFocus(f); setDepth(1); setSelected(f); }
     const d = Number(p.get('depth'));
     if (d >= 1 && d <= 3) setDepth(d);
-  }, [ent]);
+  }, [ent, initialFocus]);
 
   // ---------- element set derivation ----------
   const nodeOk = useCallback((id: string) => {

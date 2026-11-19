@@ -16,6 +16,10 @@ const isActive = (href: string) => {
       <span class="brand-text">{SITE.name}<small>{SITE.nameEn}</small></span>
     </a>
 
+    <div class="header-search">
+      <QuickSearch client:load />
+    </div>
+
     <nav class="nav" aria-label="主导航">
       {NAV.map((n) => (
         <a href={n.href} aria-current={isActive(n.href) ? 'page' : undefined}>{n.label}</a>
@@ -23,7 +27,6 @@ const isActive = (href: string) => {
     </nav>
 
     <div class="header-tools">
-      <QuickSearch client:load />
       <button class="icon-btn nav-toggle" id="nav-toggle" aria-label="打开菜单" aria-expanded="false" aria-controls="mobile-nav">
         <svg width="17" height="17" viewBox="0 0 20 20" aria-hidden="true">
           <path d="M3 6h14M3 10h14M3 14h14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />

@@ -1,28 +1,73 @@
 ---
 import Base from '../../layouts/Base.astro';
 import EntityCard from '../../components/EntityCard.astro';
+import MapExplorer from '../../components/MapExplorer.tsx';
 import { all, regionOf, regionList } from '../../lib/regions';
+import { REGION_NOTES } from '../../lib/mapPoints';
+import relationsData from '../../data/relations.json';
+
+const relations = relationsData as any[];
+const bySlug = new Map(all.map((e) => [e.slug, e]));
+
+const mapRegions = regionList.map((r) => {
+  const entities = [...r.list]
+    .sort((a: any, b: any) => b.citedBy - a.citedBy)
+    .slice(0, 8)
+    .map((e: any) => ({ slug: e.slug, title: e.title, image: e.image || null }));
+
+  const peopleSet = new Set<string>();
+  for (const e of r.list) {
+    for (const g of e.factGroups || []) {
+      for (const row of g.rows) {
+        if (/^(住民|人民|种族)$/.test(row.label)) {
+          row.text.split(/[、,，]/).map((s: string) => s.trim()).filter(Boolean).slice(0, 4).forEach((p: string) => peopleSet.add(p));
+        }
+      }
+    }
+  }
+
+  const slugs = new Set(r.list.map((e: any) => e.slug));
+  const events = relations
+    .filter((rel) => rel.type === 'place' && slugs.has(rel.t))
+    .map((rel) => bySlug.get(rel.s))
+    .filter((e: any) => e && e.type === 'event')
+    .slice(0, 5)
+    .map((e: any) => ({ slug: e.slug, title: e.title }));
+
+  const notes = (REGION_NOTES[r.name] || [])
+    .map((t) => all.find((e: any) => e.title === t))
+    .filter(Boolean)
+    .map((e: any) => ({ slug: e.slug, title: e.title }));
+
+  return {
+    name: r.name,
+    count: r.count,
+    entities,
+    people: [...peopleSet].slice(0, 6),
+    events,
+    notes,
+  };
+});
 
 const realms = all.filter((e) => e.type === 'realm').sort((a, b) => b.citedBy - a.citedBy);
-const ungrouped = all.filter((e) => (e.type === 'place') && !regionOf(e)).length;
+const ungrouped = all.filter((e) => e.type === 'place' && !regionOf(e)).length;
 const totalPlaces = all.filter((e) => e.type === 'place' || e.type === 'realm').length;
 ---
-<Base title="地理" description={`按地区层级浏览中洲的 ${totalPlaces} 个地点与势力。数据没有可靠坐标，因此不提供虚构地图。`}>
+<Base title="地理" description={`交互地图 + 地区层级：浏览中洲的 ${totalPlaces} 个地点与势力。`}>
   <section class="wrap" style="padding-top:clamp(2rem,4vw,3rem)">
     <div class="eyebrow">Geography</div>
     <h1 style="font-size:clamp(2rem,4vw,3rem);margin-top:.5rem">地理</h1>
     <p class="lede" style="margin-top:.8rem">
-      数据库里没有可信的经纬度，所以这里不做一张“看起来像地图”的示意图。
-      取而代之的是按原站分类整理出的地区层级：从地区进入，逐层看到城市、山川与道路。
+      一张示意地图：位置按相对方位手工标注，用来快速定位地区，不是测绘坐标。
+      点地图上的地区、或从右侧列表进入，就能看到该地的住民、风物与发生过的战事。
     </p>
-    <div class="hero-stats" style="margin-top:1.6rem">
-      <div class="hero-stat"><strong>{totalPlaces}</strong><span>地点与势力</span></div>
-      <div class="hero-stat"><strong>{regionList.length}</strong><span>可归类的地区</span></div>
-      <div class="hero-stat"><strong>{ungrouped}</strong><span>未归类地点</span></div>
-    </div>
   </section>
 
-  <section class="section wrap" style="padding-top:1rem">
+  <section class="wrap" style="padding-block:.6rem 1.4rem">
+    <MapExplorer client:load regions={mapRegions} />
+  </section>
+
+  <section class="section wrap" style="padding-top:0">
     <div class="section-head">
       <div>
         <div class="eyebrow">Regions</div>
