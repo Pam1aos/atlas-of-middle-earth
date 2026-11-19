@@ -22,26 +22,42 @@ function json(body: unknown, status = 200) {
   });
 }
 
+const PRESETS: Record<string, { base: string; model: string }> = {
+  deepseek: { base: 'https://api.deepseek.com/v1', model: 'deepseek-chat' },
+  openai: { base: 'https://api.openai.com/v1', model: 'gpt-4o-mini' },
+  moonshot: { base: 'https://api.moonshot.cn/v1', model: 'moonshot-v1-8k' },
+  zhipu: { base: 'https://open.bigmodel.cn/api/paas/v4', model: 'glm-4-flash' },
+  siliconflow: { base: 'https://api.siliconflow.cn/v1', model: 'Qwen/Qwen2.5-7B-Instruct' },
+  openrouter: { base: 'https://openrouter.ai/api/v1', model: 'openai/gpt-4o-mini' },
+};
+
 const cfg = () => {
   const raw = (process.env.AGENT_API_KEY || process.env.OPENAI_API_KEY || '').trim().replace(/^["']|["']$/g, '');
   // providers issue "sk-<32 hex>"; a bare 32-char hex value is a key pasted
   // without its prefix, which every provider rejects
   const key = /^[0-9a-f]{32}$/i.test(raw) ? `sk-${raw}` : raw;
+  const preset = PRESETS[(process.env.AGENT_PROVIDER || '').toLowerCase()];
   return {
     key,
-    base: (process.env.AGENT_BASE_URL || 'https://api.openai.com/v1').replace(/\/$/, ''),
-    model: process.env.AGENT_MODEL || 'gpt-4o-mini',
+    base: (preset?.base || process.env.AGENT_BASE_URL || 'https://api.openai.com/v1').replace(/\/$/, ''),
+    model: preset?.model || process.env.AGENT_MODEL || 'gpt-4o-mini',
+    keyInfo: {
+      length: raw.length,
+      prefixed: raw.startsWith('sk-'),
+      normalizedLength: key.length,
+      looksLikeHex32: /^[0-9a-f]{32}$/i.test(raw),
+    },
   };
 };
 
 export async function GET({ request }: { request: Request }) {
-  const { key, base, model } = cfg();
+  const { key, base, model, keyInfo } = cfg();
   const url = new URL(request.url);
 
   if (!url.searchParams.get('probe')) {
-    return json({ configured: Boolean(key), base, model });
+    return json({ configured: Boolean(key), base, model, keyInfo });
   }
-  if (!key) return json({ configured: false, base, model, error: 'not_configured' }, 501);
+  if (!key) return json({ configured: false, base, model, keyInfo, error: 'not_configured' }, 501);
 
   try {
     const res = await fetch(`${base}/chat/completions`, {
@@ -50,7 +66,7 @@ export async function GET({ request }: { request: Request }) {
       body: JSON.stringify({ model, max_tokens: 1, messages: [{ role: 'user', content: 'ping' }] }),
     });
     const text = await res.text();
-    return json({ configured: true, base, model, status: res.status, upstream: text.slice(0, 400) });
+    return json({ configured: true, base, model, keyInfo, status: res.status, upstream: text.slice(0, 400) });
   } catch (err) {
     return json({ configured: true, base, model, error: String((err as Error).message) }, 504);
   }
