@@ -180,5 +180,15 @@ export function buildContext(rec: AgentRec, recs: Map<string, AgentRec>): string
     })
     .filter(Boolean);
   if (rels.length) lines.push(`关系：\n${rels.join('\n')}`);
+
+  // a few one-line summaries of the linked entries give the model enough to
+  // answer "who is X to Y" style questions without inventing anything
+  const neighbours = rec.r
+    .map((r) => recs.get(r.split('|')[0]))
+    .filter((o): o is AgentRec => Boolean(o && o.su))
+    .slice(0, 6)
+    .map((o) => `- ${o.t}：${o.su.slice(0, 90)}`);
+  if (neighbours.length) lines.push(`相关条目摘要：\n${neighbours.join('\n')}`);
+
   return lines.join('\n');
 }
