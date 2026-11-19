@@ -22,11 +22,17 @@ function json(body: unknown, status = 200) {
   });
 }
 
-const cfg = () => ({
-  key: process.env.AGENT_API_KEY || process.env.OPENAI_API_KEY || '',
-  base: (process.env.AGENT_BASE_URL || 'https://api.openai.com/v1').replace(/\/$/, ''),
-  model: process.env.AGENT_MODEL || 'gpt-4o-mini',
-});
+const cfg = () => {
+  const raw = (process.env.AGENT_API_KEY || process.env.OPENAI_API_KEY || '').trim().replace(/^["']|["']$/g, '');
+  // providers issue "sk-<32 hex>"; a bare 32-char hex value is a key pasted
+  // without its prefix, which every provider rejects
+  const key = /^[0-9a-f]{32}$/i.test(raw) ? `sk-${raw}` : raw;
+  return {
+    key,
+    base: (process.env.AGENT_BASE_URL || 'https://api.openai.com/v1').replace(/\/$/, ''),
+    model: process.env.AGENT_MODEL || 'gpt-4o-mini',
+  };
+};
 
 export async function GET({ request }: { request: Request }) {
   const { key, base, model } = cfg();
