@@ -83,6 +83,26 @@ export default function BrowseApp({ rows }: { rows: Row[] }) {
     return c;
   }, [rows]);
 
+  /**
+   * Era coverage differs per entity type: only characters, places, events, items…
+   * carry an era in the wiki categories. Options are therefore computed from the
+   * currently selected type so that an impossible combination can never be chosen.
+   */
+  const eraOptions = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const r of rows) {
+      if (!r.era) continue;
+      if (type && r.type !== type) continue;
+      counts[r.era] = (counts[r.era] || 0) + 1;
+    }
+    return ERAS.filter((e) => counts[e] > 0).map((e) => ({ era: e, count: counts[e] }));
+  }, [rows, type]);
+
+  // keep the era filter valid when the type changes
+  useEffect(() => {
+    if (era && !eraOptions.some((o) => o.era === era)) setEra('');
+  }, [eraOptions, era]);
+
   const filtered = useMemo(() => {
     const query = norm(q);
     let out = rows;
@@ -136,13 +156,17 @@ export default function BrowseApp({ rows }: { rows: Row[] }) {
               )}
             </label>
 
-            <label>
-              <span className="sr-only">时代</span>
-              <select className="select" value={era} onChange={(e) => setEra(e.target.value)}>
-                <option value="">全部时代</option>
-                {ERAS.map((x) => <option key={x} value={x}>{x}</option>)}
-              </select>
-            </label>
+            {eraOptions.length > 0 && (
+              <label>
+                <span className="sr-only">时代</span>
+                <select className="select" value={era} onChange={(e) => setEra(e.target.value)}>
+                  <option value="">全部时代</option>
+                  {eraOptions.map((o) => (
+                    <option key={o.era} value={o.era}>{o.era}（{o.count}）</option>
+                  ))}
+                </select>
+              </label>
+            )}
 
             <label>
               <span className="sr-only">排序</span>

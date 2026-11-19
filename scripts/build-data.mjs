@@ -194,9 +194,20 @@ for (const e of entities) {
   // dates from facts
   const dateFacts = e.facts.filter((f) => /时间|出生|死亡|日期|年份|建立|成立|解散|发售|上映/.test(f.label));
   for (const f of dateFacts) {
-    const era = (f.text.match(ERA_RE) || [])[1] || e.era;
-    const ym = f.text.match(YEAR_RE);
-    if (era && ym) e.dates.push({ label: f.label, era, year: Number(ym[1]), text: f.text });
+    // "巨灯纪元3450年 - 第一纪元1年" must take the year that follows the era token,
+    // otherwise a range with two epochs records the wrong year.
+    const eraMatch = ERA_RE.exec(f.text);
+    const era = (eraMatch && eraMatch[1]) || e.era;
+    let year = null;
+    if (eraMatch) {
+      const after = f.text.slice(eraMatch.index + eraMatch[1].length).match(YEAR_RE);
+      if (after) year = Number(after[1]);
+    }
+    if (year === null) {
+      const ym = f.text.match(YEAR_RE);
+      if (ym) year = Number(ym[1]);
+    }
+    if (era && year) e.dates.push({ label: f.label, era, year, text: f.text });
   }
   if (!e.era && e.dates.length) e.era = e.dates[0].era;
 }

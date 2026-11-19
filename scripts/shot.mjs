@@ -82,32 +82,40 @@ for (const s of shots) {
   await cdp.send('Page.navigate', { url: BASE + s.url });
   await new Promise((r) => setTimeout(r, s.wait ?? 1400));
   await cdp.evaluate('document.fonts?.ready ? document.fonts.ready.then(()=>true) : true');
-  // walk the page so client:visible islands and lazy images hydrate before capture
-  await cdp.evaluate(`(async () => {
-    const h = document.documentElement.scrollHeight;
-    for (let y = 0; y < h; y += 500) { window.scrollTo(0, y); await new Promise(r => setTimeout(r, 70)); }
-    window.scrollTo(0, 0);
-    await new Promise(r => setTimeout(r, 600));
-    return true;
-  })()`);
-  await new Promise((r) => setTimeout(r, 300));
+  // walk the page so client:visible islands and lazy images hydrate before capture.
+  // fire-and-forget: awaiting a long async evaluate can hang if the renderer swaps context.
+  await cdp
+    .send('Runtime.evaluate', {
+      expression: `(async () => {
+        const h = document.documentElement.scrollHeight;
+        for (let y = 0; y < h; y += 500) { window.scrollTo(0, y); await new Promise(r => setTimeout(r, 70)); }
+        document.documentElement.style.scrollBehavior = 'auto';
+        window.scrollTo(0, 0);
+      })()`,
+      awaitPromise: false,
+    })
+    .catch(() => {});
+  await new Promise((r) => setTimeout(r, 1800));
+  await cdp.evaluate("document.documentElement.style.scrollBehavior='auto'; window.scrollTo(0,0);").catch(() => {});
+  await new Promise((r) => setTimeout(r, 250));
 
   let clip;
   let captureBeyondViewport = false;
+  let capture = { format: 'png' };
   if (s.full) {
-    const h = await cdp.evaluate('Math.min(6000, Math.max(document.body.scrollHeight, document.documentElement.scrollHeight))');
-    await cdp.send('Emulation.setDeviceMetricsOverride', {
-      width: s.w, height: Math.max(s.h, Math.min(4200, h)), deviceScaleFactor: s.mobile ? 2 : 1, mobile: !!s.mobile,
-    });
-    await new Promise((r) => setTimeout(r, 500));
+    const h = await cdp.evaluate('Math.max(document.body.scrollHeight, document.documentElement.scrollHeight)');
+    // anchor the capture to the document origin: resizing the viewport keeps the
+    // old scroll offset and produced screenshots that started mid-page.
+    capture = {
+      format: 'png',
+      captureBeyondViewport: true,
+      clip: { x: 0, y: 0, width: s.w, height: Math.min(4200, Math.max(s.h, h)), scale: 1 },
+    };
   }
-  const { data } = await cdp.send('Page.captureScreenshot', { format: 'png', captureBeyondViewport });
+  const { data } = await cdp.send('Page.captureScreenshot', capture);
   fs.writeFileSync(path.join(OUT, `${s.name}.png`), Buffer.from(data, 'base64'));
   console.log('shot', s.name);
 
-  if (s.full) {
-    await cdp.send('Emulation.setDeviceMetricsOverride', { width: s.w, height: s.h, deviceScaleFactor: s.mobile ? 2 : 1, mobile: !!s.mobile });
-  }
 }
 
 // console errors on the graph page

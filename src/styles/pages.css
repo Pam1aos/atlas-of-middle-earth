@@ -671,6 +671,7 @@
 }
 .tl-items { display: flex; flex-direction: column; align-items: flex-start; gap: 0.35rem; }
 .tl-item {
+  min-width: min(100%, 340px);
   display: flex;
   gap: 0.7rem;
   align-items: baseline;
@@ -962,3 +963,63 @@
   box-shadow: var(--shadow-sm);
 }
 .card h3 { font-size: 1rem; letter-spacing: -0.01em; }
+/* ---------------- timeline (v2) ---------------- */
+.timeline-tabs {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+.era-facts {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  font-size: 0.74rem;
+  color: var(--muted);
+}
+.era-facts span {
+  background: var(--surface);
+  border-radius: var(--r-pill);
+  padding: 0.35rem 0.75rem;
+  box-shadow: var(--shadow-sm);
+}
+.era-facts b {
+  color: var(--ink);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.era-blurb {
+  margin-top: 0.9rem;
+  max-width: 62ch;
+  font-size: 0.9rem;
+}
+.tl-block { margin-bottom: 1.4rem; }
+.tl-block:last-child { margin-bottom: 0; }
+.year-chips { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.4rem; }
+.timeline-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  gap: clamp(1.5rem, 3vw, 2.6rem);
+  align-items: start;
+  margin-top: 1.6rem;
+}
+.timeline-aside {
+  position: sticky;
+  top: 96px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+.era-stats { margin: 0; display: flex; flex-direction: column; gap: 0.35rem; }
+.era-stats > div { display: flex; justify-content: space-between; gap: 0.6rem; font-size: 0.84rem; }
+.era-stats dt { color: var(--muted); }
+.era-stats dd { margin: 0; font-weight: 700; font-variant-numeric: tabular-nums; }
+.year-chips { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+.year-chips .chip { font-size: 0.74rem; padding: 0.3rem 0.65rem; }
+
+@media (max-width: 1024px) {
+  .timeline-layout { grid-template-columns: 1fr; }
+  .timeline-aside { position: static; order: -1; flex-direction: row; flex-wrap: wrap; }
+  .timeline-aside > .side-card { flex: 1 1 240px; }
+}

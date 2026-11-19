@@ -21,7 +21,6 @@ const featured = ['阿拉贡', '甘道夫', '夏尔', '魔戒大战', '至尊戒
   .filter(Boolean);
 
 const heroImage = (all.find((e) => e.title === '阿拉贡') || withImage[0]) as any;
-const topCited = [...all].sort((a, b) => b.citedBy - a.citedBy).slice(0, 6);
 
 const fmt = (n: number) => n.toLocaleString('zh-CN');
 ---
@@ -177,34 +176,6 @@ const fmt = (n: number) => n.toLocaleString('zh-CN');
       <MiniGraph client:visible src="/data/home-graph.json" height="480px" layout="cose" />
       <div class="graph-window__hint">拖动节点 · 滚轮缩放 · 点击进入条目</div>
       <a class="btn btn--ghost graph-window__cta" href="/graph/">完整图谱</a>
-    </div>
-  </section>
-
-  <section class="section wrap" aria-labelledby="cov-h">
-    <div class="section-head">
-      <div>
-        <div class="eyebrow">Coverage</div>
-        <h2 id="cov-h">这份档案覆盖了什么</h2>
-      </div>
-      <a class="section-link" href="/about/">数据说明与已知缺失 →</a>
-    </div>
-    <div class="coverage">
-      <div>
-        <h4>收录范围</h4>
-        <p>魔戒中文维基主命名空间的全部 {fmt(stats.entities)} 个条目，含正文、信息框与插图；不含模板、分类、讨论与博客页。</p>
-      </div>
-      <div>
-        <h4>结构化程度</h4>
-        <p>{fmt(stats.withFacts)} 个条目带有可解析的信息框，共 {fmt(stats.totalFacts)} 条字段，构成 {fmt(stats.relations)} 条有出处的关系。</p>
-      </div>
-      <div>
-        <h4>已知缺失</h4>
-        <p>{fmt(stats.noImage)} 个条目暂无插图（原站即无图）；没有可靠坐标，因此不提供伪造的地理地图。</p>
-      </div>
-      <div>
-        <h4>最常被引用</h4>
-        <p>{topCited.slice(0, 4).map((e) => e.title).join('、')} 是正文里被链接最多的条目。</p>
-      </div>
     </div>
   </section>
 

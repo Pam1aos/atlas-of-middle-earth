@@ -61,7 +61,6 @@ const dateLine = (e.dates || []).map((d: any) => `${d.label}：${d.text}`).slice
     <div class="entry-title-row">
       <h1 class="entry-title">{e.title}</h1>
       <span class="tbadge" style={`--tb:${meta.color}`}>{meta.label}</span>
-      {e.flags?.length > 0 && <span class="tbadge" title="原站维护标记">原站标记：{e.flags.join('、')}</span>}
     </div>
     {e.english && <div class="entry-title-en">{e.english}</div>}
     {e.aliases?.length > 0 && (
@@ -180,14 +179,7 @@ const dateLine = (e.dates || []).map((d: any) => `${d.label}：${d.text}`).slice
           </div>
         )}
 
-        <div class="side-card">
-          <h3>来源</h3>
-          <ul>
-            <li><a href={e.source} target="_blank" rel="noopener noreferrer">魔戒中文维基：{e.title} ↗</a></li>
-            {e.updated && <li class="muted" style="font-size:.76rem">原站更新：{e.updated.slice(0, 10)}</li>}
-            <li class="muted" style="font-size:.76rem">被 {e.citedBy} 个条目引用</li>
-          </ul>
-        </div>
+
       </aside>
     </div>
   </article>
@@ -200,6 +192,5 @@ const dateLine = (e.dates || []).map((d: any) => `${d.label}：${d.text}`).slice
     image: e.image ? new URL(e.image, Astro.site ?? 'https://atlas-of-middle-earth.example').href : undefined,
     inLanguage: 'zh-CN',
     isPartOf: { '@type': 'WebSite', name: '中洲志' },
-    citation: e.source,
   })} />
 </Base>

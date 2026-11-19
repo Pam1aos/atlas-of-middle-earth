@@ -13,25 +13,17 @@ const year = new Date().getFullYear();
           <span class="brand-text">{SITE.name}<small>{SITE.nameEn}</small></span>
         </a>
         <p style="max-width:38ch;margin-top:.7rem;color:var(--ink-3);font-size:.86rem">
-          个人整理的中洲世界档案。全部条目、图片与关系均来自魔戒中文维基，
-          本站只做结构化、检索与可视化。
+          个人整理的中洲世界档案：人物、地点、事件与关系图谱。
         </p>
       </div>
       <div>
         <h4>浏览</h4>
         {NAV.map((n) => <a href={n.href}>{n.label}</a>)}
       </div>
-      <div>
-        <h4>数据</h4>
-        <a href="/about/">来源与覆盖范围</a>
-        <a href="/about/#quality">数据质量报告</a>
-        <a href="/about/#credits">图片署名</a>
-        <a href="https://lotr.huijiwiki.com/wiki/%E9%A6%96%E9%A1%B5" target="_blank" rel="noopener noreferrer">魔戒中文维基 ↗</a>
-      </div>
     </div>
     <div class="footer-note">
       <span>© {year} {SITE.name} · 个人非商业项目</span>
-      <span>{stats.entities.toLocaleString('zh-CN')} 条目 · {stats.relations.toLocaleString('zh-CN')} 条关系 · 数据快照 2026-11-18</span>
+      <span>{stats.entities.toLocaleString('zh-CN')} 条目 · {stats.relations.toLocaleString('zh-CN')} 条关系</span>
     </div>
   </div>
 </footer>
