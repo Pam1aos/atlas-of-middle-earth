@@ -129,7 +129,7 @@ export default function MapExplorer({ regions, markers }: { regions: RegionDatum
 
   return (
     <div className="map-window" data-panel={panelOpen ? 'open' : 'closed'}>
-      <div className="map-canvas">
+      <div className="map-canvas" onClick={() => setTip(null)}>
         <div
           className="map-stage"
           ref={stageRef}
@@ -137,7 +137,7 @@ export default function MapExplorer({ regions, markers }: { regions: RegionDatum
           onPointerDown={onPointerDown}
           onPointerMove={onPointerMove}
           onPointerUp={onPointerUp}
-          onPointerLeave={() => { onPointerUp(); setTip(null); }}
+          onPointerLeave={onPointerUp}
         >
           <div
             className="map-zoom"
@@ -153,13 +153,7 @@ export default function MapExplorer({ regions, markers }: { regions: RegionDatum
                   <g
                     key={`${m.kind}-${m.title}`}
                     className={cls}
-                    onMouseEnter={(e) => showTip(e, m)}
-                    onMouseLeave={() => setTip(null)}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      if (isRegion) focus(m.title);
-                      else if (m.slug) window.location.href = `/entry/${encodeURIComponent(m.slug)}/`;
-                    }}
+                    onClick={(e) => { e.stopPropagation(); showTip(e, m); }}
                     role="button"
                     tabIndex={0}
                     onKeyDown={(e) => { if (e.key === 'Enter' && m.slug) window.location.href = `/entry/${encodeURIComponent(m.slug)}/`; }}
@@ -183,15 +177,42 @@ export default function MapExplorer({ regions, markers }: { regions: RegionDatum
         </div>
 
         {tip && (
-          <div className="map-tip" style={{ left: tip.x, top: tip.y }}>
-            {tip.m.image && <img src={tip.m.image} alt="" />}
-            <div className="map-tip__body">
-              <strong>{tip.m.title}</strong>
-              <span className="map-tip__kind">
+          <div
+            className="map-card"
+            style={{ left: tip.x, top: tip.y }}
+            role="button"
+            tabIndex={0}
+            onClick={(e) => {
+              e.stopPropagation();
+              if (tip.m.slug) window.location.href = `/entry/${encodeURIComponent(tip.m.slug)}/`;
+              else focus(tip.m.title);
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && tip.m.slug) window.location.href = `/entry/${encodeURIComponent(tip.m.slug)}/`;
+            }}
+          >
+            <span className="map-card__leaf" aria-hidden="true">
+              <svg viewBox="0 0 60 60"><path d="M30 56C14 44 12 20 30 4c18 16 16 40 0 52Z" /></svg>
+            </span>
+
+            <span className="map-card__art">
+              {tip.m.image ? (
+                <img className="map-card__img" src={tip.m.image} alt="" loading="lazy" />
+              ) : (
+                <span className="map-card__glyph" aria-hidden="true">
+                  {tip.m.kind === 'region' ? '◉' : tip.m.kind === 'people' ? '◍' : tip.m.kind === 'event' ? '◈' : '❧'}
+                </span>
+              )}
+            </span>
+
+            <span className="map-card__body">
+              <span className="map-card__kind">
                 {tip.m.kind === 'region' ? '地区' : tip.m.kind === 'people' ? '住民' : tip.m.kind === 'event' ? '事件' : tip.m.kind === 'plant' ? '植物' : '生物'}
               </span>
-              <p>{tip.m.summary || '条目库中没有这条摘要，点开查看正文。'}</p>
-            </div>
+              <strong className="map-card__title">{tip.m.title}</strong>
+              <span className="map-card__sum">{tip.m.summary || '条目库里没有这条摘要。'}</span>
+              <span className="map-card__cta">{tip.m.slug ? '查看词条 →' : '查看地区 →'}</span>
+            </span>
           </div>
         )}
 
