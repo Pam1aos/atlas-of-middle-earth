@@ -98,7 +98,11 @@ export default function AgentDock() {
           push({ role: 'agent', blocks: [{ kind: 'note', text: '服务端未配置模型 Key，以上为本地检索结果。' }] });
         } else if (!res.ok) {
           const data = await res.json().catch(() => ({}));
-          push({ role: 'agent', blocks: [{ kind: 'note', text: `模型服务返回错误（${data.error || res.status}），以上为本地检索结果。` }] });
+          const detail = data.message ? `：${String(data.message).slice(0, 120)}` : '';
+          push({
+            role: 'agent',
+            blocks: [{ kind: 'note', text: `模型服务返回错误（${data.status || data.error || res.status}）${detail}。以上为本地检索结果。` }],
+          });
         } else {
           const data = await res.json();
           if (data.text) push({ role: 'agent', blocks: [{ kind: 'h', text: '模型整合' }, { kind: 'p', text: data.text }] });

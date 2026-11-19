@@ -4,6 +4,11 @@
  * The API key lives only in Vercel environment variables — the browser never
  * sees it. Without AGENT_API_KEY (or OPENAI_API_KEY) the route answers 501 and
  * the widget keeps using its local, retrieval-only answer.
+ *
+ * GET /api/ask            -> { configured, base, model }
+ * GET /api/ask?probe=1    -> makes a 1-token call and returns the upstream answer
+ *                            or the provider's error verbatim (useful to tell
+ *                            "wrong key" apart from "wrong endpoint")
  */
 export const prerender = false;
 
@@ -17,10 +22,36 @@ function json(body: unknown, status = 200) {
   });
 }
 
+const cfg = () => ({
+  key: process.env.AGENT_API_KEY || process.env.OPENAI_API_KEY || '',
+  base: (process.env.AGENT_BASE_URL || 'https://api.openai.com/v1').replace(/\/$/, ''),
+  model: process.env.AGENT_MODEL || 'gpt-4o-mini',
+});
+
+export async function GET({ request }: { request: Request }) {
+  const { key, base, model } = cfg();
+  const url = new URL(request.url);
+
+  if (!url.searchParams.get('probe')) {
+    return json({ configured: Boolean(key), base, model });
+  }
+  if (!key) return json({ configured: false, base, model, error: 'not_configured' }, 501);
+
+  try {
+    const res = await fetch(`${base}/chat/completions`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', authorization: `Bearer ${key}` },
+      body: JSON.stringify({ model, max_tokens: 1, messages: [{ role: 'user', content: 'ping' }] }),
+    });
+    const text = await res.text();
+    return json({ configured: true, base, model, status: res.status, upstream: text.slice(0, 400) });
+  } catch (err) {
+    return json({ configured: true, base, model, error: String((err as Error).message) }, 504);
+  }
+}
+
 export async function POST({ request }: { request: Request }) {
-  const key = process.env.AGENT_API_KEY || process.env.OPENAI_API_KEY;
-  const base = (process.env.AGENT_BASE_URL || 'https://api.openai.com/v1').replace(/\/$/, '');
-  const model = process.env.AGENT_MODEL || 'gpt-4o-mini';
+  const { key, base, model } = cfg();
 
   if (!key) {
     return json({
@@ -66,7 +97,12 @@ export async function POST({ request }: { request: Request }) {
 
     if (!res.ok) {
       const text = await res.text().catch(() => '');
-      return json({ error: 'upstream', status: res.status, message: text.slice(0, 300) }, 502);
+      let message = text.slice(0, 300);
+      try {
+        const parsed = JSON.parse(text);
+        message = parsed?.error?.message || message;
+      } catch { /* keep raw text */ }
+      return json({ error: 'upstream', status: res.status, message, base, model }, 502);
     }
 
     const data: any = await res.json();
@@ -74,13 +110,8 @@ export async function POST({ request }: { request: Request }) {
     if (!text) return json({ error: 'empty_completion' }, 502);
     return json({ text });
   } catch (err) {
-    return json({ error: 'timeout_or_network', message: String((err as Error).message) }, 504);
+    return json({ error: 'timeout_or_network', message: String((err as Error).message), base }, 504);
   } finally {
     clearTimeout(timer);
   }
-}
-
-export async function GET() {
-  const configured = Boolean(process.env.AGENT_API_KEY || process.env.OPENAI_API_KEY);
-  return json({ configured, model: process.env.AGENT_MODEL || 'gpt-4o-mini' });
 }
