@@ -1319,24 +1319,30 @@
 
 @media (max-width: 900px) {
   .agent-shell {
-    left: 0.6rem;
-    right: 0.6rem;
-    bottom: 4.6rem;
+    left: 0.5rem;
+    right: 0.5rem;
+    bottom: 0.5rem;
     width: auto;
-    height: min(76vh, 620px);
+    height: min(88vh, 760px);
     grid-template-columns: 1fr;
-    grid-template-rows: minmax(0, 1fr) auto;
+    grid-template-rows: minmax(0, 1fr) minmax(0, 38%);
+    border-radius: var(--r-lg);
   }
   .agent-sources {
     border-right: 0;
     border-top: 1px solid var(--line);
-    max-height: 34%;
+    max-height: none;
+    overflow: hidden;
     order: 2;
   }
-  .agent-panel { order: 1; }
+  .agent-source-body { overflow-y: auto; }
+  /* the panel has its own close button; hiding the launcher avoids covering the
+     source list on small screens */
+  .agent-launcher.is-open { display: none; }
   .agent-launcher { right: 0.9rem; bottom: 0.9rem; }
   .agent-modal { padding: 0; }
   .agent-modal__panel { width: 100%; height: 100%; border-radius: 0; }
+  .tabs { flex-wrap: wrap; }
 }
 /* ============================================================
    Atlas map window
@@ -1428,8 +1434,18 @@
 .map-events a:hover, .map-entities a:hover { color: var(--green-deep); }
 
 @media (max-width: 900px) {
-  .map-window { grid-template-columns: 1fr; grid-template-rows: minmax(0, 1fr) auto; height: min(88vh, 720px); }
-  .map-side { border-left: 0; border-top: 1px solid var(--line); max-height: 42%; }
+  /* the canvas is absolutely-positioned inside its cell, so the row needs a
+     real height — otherwise it collapses to 0 and the map disappears */
+  .map-window {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto;
+    height: auto;
+  }
+  .map-canvas { aspect-ratio: 4 / 3; min-height: 0; }
+  .map-side { border-left: 0; border-top: 1px solid var(--line); max-height: 50vh; }
+  .map-hint { font-size: 0.6rem; left: 0.6rem; right: 0.6rem; bottom: 0.6rem; }
+  .map-toolbar { left: 0.6rem; top: 0.6rem; gap: 0.25rem; }
+  .map-toolbar .icon-btn { width: 34px; height: 34px; font-size: 0.8rem; }
 }
 /* ============================================================
    Atlas map v4 — traced base map + overlay layer
@@ -1448,6 +1464,11 @@
   width: 100%;
   transform-origin: 0 0;
   will-change: transform;
+  /* default framing; React only overrides it after the user interacts */
+  transform: translate3d(-210px, -120px, 0) scale(1.32);
+}
+@media (max-width: 720px) {
+  .map-zoom { transform: none; }
 }
 .map-base {
   display: block;

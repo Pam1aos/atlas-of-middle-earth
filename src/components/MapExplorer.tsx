@@ -14,10 +14,15 @@ const W = MAP_VIEWBOX.w;
 const H = MAP_VIEWBOX.h;
 const MIN_SCALE = 1;
 const MAX_SCALE = 6;
-const HOME = { scale: 1.32, x: -210, y: -120 };
+const homeView = () =>
+  typeof window !== 'undefined' && window.innerWidth < 720
+    ? { scale: 1, x: 0, y: 0 }
+    : { scale: 1.32, x: -210, y: -120 };
 
 export default function MapExplorer({ regions }: { regions: RegionDatum[] }) {
-  const [view, setView] = useState(HOME);
+  const [view, setView] = useState(homeView);
+  const [touched, setTouched] = useState(false);
+  const setTouch = (v: boolean) => setTouched(v);
   const [selected, setSelected] = useState<string | null>(null);
   const [showEvents, setShowEvents] = useState(true);
   const [showNature, setShowNature] = useState(true);
@@ -35,10 +40,11 @@ export default function MapExplorer({ regions }: { regions: RegionDatum[] }) {
   const active = selected ? byName.get(selected) : null;
 
   const focus = (name: string) => {
+    setTouch(true);
     setSelected(name);
     setPanelOpen(true);
     const p = REGION_POINTS.find((r) => r.name === name);
-    if (!p || p.offmap) { setView(HOME); return; }
+    if (!p || p.offmap) { setView(homeView()); return; }
     const el = stageRef.current;
     if (!el) return;
     const rect = el.getBoundingClientRect();
@@ -51,7 +57,7 @@ export default function MapExplorer({ regions }: { regions: RegionDatum[] }) {
     });
   };
 
-  const reset = () => { setView(HOME); setSelected(null); };
+  const reset = () => { setTouch(false); setView(homeView()); setSelected(null); };
 
   const zoomAt = (factor: number, cx?: number, cy?: number) => {
     const el = stageRef.current;
@@ -59,6 +65,7 @@ export default function MapExplorer({ regions }: { regions: RegionDatum[] }) {
     const rect = el.getBoundingClientRect();
     const px = cx ?? rect.width / 2;
     const py = cy ?? rect.height / 2;
+    setTouch(true);
     setView((v) => {
       const scale = Math.min(MAX_SCALE, Math.max(MIN_SCALE, v.scale * factor));
       const k = scale / v.scale;
@@ -77,6 +84,7 @@ export default function MapExplorer({ regions }: { regions: RegionDatum[] }) {
   const onPointerDown = (e: React.PointerEvent) => {
     (e.target as Element).setPointerCapture?.(e.pointerId);
     drag.current = { x: e.clientX, y: e.clientY, vx: view.x, vy: view.y };
+    setTouch(true);
   };
   const onPointerMove = (e: React.PointerEvent) => {
     const d = drag.current;
@@ -84,6 +92,12 @@ export default function MapExplorer({ regions }: { regions: RegionDatum[] }) {
     setView((v) => ({ ...v, x: d.vx + (e.clientX - d.x), y: d.vy + (e.clientY - d.y) }));
   };
   const onPointerUp = () => { drag.current = null; };
+
+  // the initial render happens on the server, where window is undefined, so the
+  // mobile fit has to be applied after hydration
+  useEffect(() => {
+    if (window.innerWidth < 720) setView({ scale: 1, x: 0, y: 0 });
+  }, []);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setSelected(null); };
@@ -109,7 +123,7 @@ export default function MapExplorer({ regions }: { regions: RegionDatum[] }) {
         >
           <div
             className="map-zoom"
-            style={{ transform: `translate3d(${view.x}px, ${view.y}px, 0) scale(${view.scale})` }}
+            style={touched ? { transform: `translate3d(${view.x}px, ${view.y}px, 0) scale(${view.scale})` } : undefined}
           >
             <img className="map-base" src="/maps/middle-earth.svg" alt="中洲地图（手工描绘版）" draggable={false} />
             <svg className="map-overlay" viewBox={`0 0 ${W} ${H}`} aria-hidden="true">
