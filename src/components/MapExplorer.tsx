@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { MAP_VIEWBOX } from '../lib/mapPoints';
+import { POWER_AREAS, LANDMARKS, ICON_PATHS, type LandmarkIcon } from '../lib/mapLayers';
 
 export interface RegionDatum {
   name: string;
@@ -10,11 +11,22 @@ export interface RegionDatum {
   notes: { slug: string; title: string }[];
 }
 
+export interface LandmarkPin {
+  title: string;
+  x: number;
+  y: number;
+  icon: LandmarkIcon;
+  slug: string | null;
+  image: string | null;
+  summary: string;
+  type: string | null;
+}
+
 export interface MapMarker {
   title: string;
   x: number;
   y: number;
-  kind: 'region' | 'people' | 'event' | 'nature' | 'plant';
+  kind: 'region' | 'people' | 'event' | 'nature' | 'plant' | 'landmark';
   slug: string | null;
   image: string | null;
   summary: string;
@@ -28,13 +40,15 @@ const MAX_SCALE = 7;
 
 interface Tip { x: number; y: number; m: MapMarker }
 
-export default function MapExplorer({ regions, markers }: { regions: RegionDatum[]; markers: MapMarker[] }) {
+export default function MapExplorer({ regions, markers, landmarks }: { regions: RegionDatum[]; markers: MapMarker[]; landmarks: LandmarkPin[] }) {
   const [view, setView] = useState({ scale: 1, x: 0, y: 0 });
   const [touched, setTouched] = useState(false);
   const [selected, setSelected] = useState<string | null>(null);
   const [showEvents, setShowEvents] = useState(true);
   const [showNature, setShowNature] = useState(true);
   const [showPeoples, setShowPeoples] = useState(true);
+  const [showPowers, setShowPowers] = useState(true);
+  const [showLandmarks, setShowLandmarks] = useState(true);
   const [panelOpen, setPanelOpen] = useState(true);
   const [query, setQuery] = useState('');
   const [tip, setTip] = useState<Tip | null>(null);
@@ -145,6 +159,16 @@ export default function MapExplorer({ regions, markers }: { regions: RegionDatum
           >
             <img className="map-base" src="/maps/middle-earth-organic.svg" alt="中洲地图" draggable={false} />
             <svg className="map-overlay" viewBox={`0 0 ${W} ${H}`} aria-hidden="true">
+              {showPowers && (
+                <g className="power-layer">
+                  {POWER_AREAS.map((a) => (
+                    <g key={a.name}>
+                      <path className="power-area" d={a.d} fill={a.color} />
+                      {a.label && <text className="power-label" x={a.label.x} y={a.label.y}>{a.name}</text>}
+                    </g>
+                  ))}
+                </g>
+              )}
               {visible.map((m) => {
                 const isRegion = m.kind === 'region';
                 const isActive = selected === m.title;
@@ -172,6 +196,26 @@ export default function MapExplorer({ regions, markers }: { regions: RegionDatum
                   </g>
                 );
               })}
+
+              {showLandmarks &&
+                landmarks.map((l) => (
+                  <g
+                    key={`lm-${l.title}`}
+                    className={`lm lm--${l.icon}`}
+                    transform={`translate(${l.x - 30} ${l.y - 30}) scale(2.5)`}
+                    onClick={(ev) => {
+                      ev.stopPropagation();
+                      showTip(ev as unknown as React.MouseEvent, {
+                        title: l.title, x: l.x, y: l.y, kind: 'landmark',
+                        slug: l.slug, image: l.image, summary: l.summary, type: l.type,
+                      });
+                    }}
+                  >
+                    <title>{l.title}</title>
+                    <circle className="lm__badge" cx="12" cy="12" r="11" />
+                    <path className="lm__icon" d={ICON_PATHS[l.icon as LandmarkIcon]} />
+                  </g>
+                ))}
             </svg>
           </div>
         </div>
@@ -207,7 +251,7 @@ export default function MapExplorer({ regions, markers }: { regions: RegionDatum
 
             <span className="map-card__body">
               <span className="map-card__kind">
-                {tip.m.kind === 'region' ? '地区' : tip.m.kind === 'people' ? '住民' : tip.m.kind === 'event' ? '事件' : tip.m.kind === 'plant' ? '植物' : '生物'}
+                {tip.m.kind === 'landmark' ? '地点' : tip.m.kind === 'region' ? '地区' : tip.m.kind === 'people' ? '住民' : tip.m.kind === 'event' ? '事件' : tip.m.kind === 'plant' ? '植物' : '生物'}
               </span>
               <strong className="map-card__title">{tip.m.title}</strong>
               <span className="map-card__sum">{tip.m.summary || '条目库里没有这条摘要。'}</span>
@@ -222,7 +266,7 @@ export default function MapExplorer({ regions, markers }: { regions: RegionDatum
           <button className="icon-btn" onClick={reset} aria-label="重置视图">↺</button>
           <button className="icon-btn" aria-pressed={showEvents} onClick={() => setShowEvents((v) => !v)} title="历史事件">◈</button>
           <button className="icon-btn" aria-pressed={showNature} onClick={() => setShowNature((v) => !v)} title="风物与生物">❧</button>
-          <button className="icon-btn" aria-pressed={showPeoples} onClick={() => setShowPeoples((v) => !v)} title="住民">◍</button>
+          <button className="icon-btn" aria-pressed={showPeoples} onClick={() => setShowPeoples((v) => !v)} title="住民">◍</button>`n          <button className="icon-btn" aria-pressed={showPowers} onClick={() => setShowPowers((v) => !v)} title="势力范围">▨</button>`n          <button className="icon-btn" aria-pressed={showLandmarks} onClick={() => setShowLandmarks((v) => !v)} title="地标建筑">⌂</button>
           <button
             className="icon-btn map-panel-toggle"
             onClick={() => setPanelOpen((v) => !v)}

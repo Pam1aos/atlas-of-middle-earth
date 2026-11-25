@@ -4,6 +4,7 @@ import EntityCard from '../../components/EntityCard.astro';
 import MapExplorer from '../../components/MapExplorer.tsx';
 import { all, regionOf, regionList } from '../../lib/regions';
 import { REGION_NOTES, REGIONS, PEOPLES, EVENTS, NATURE } from '../../lib/mapPoints';
+import { LANDMARKS } from '../../lib/mapLayers';
 import relationsData from '../../data/relations.json';
 
 const relations = relationsData as any[];
@@ -25,6 +26,20 @@ const markers = [...REGIONS, ...PEOPLES, ...EVENTS, ...NATURE]
       type: e?.type || null,
     };
   });
+
+const landmarks = LANDMARKS.map((l) => {
+  const e: any = byTitle.get(l.title);
+  return {
+    title: l.title,
+    x: l.x,
+    y: l.y,
+    icon: l.icon,
+    slug: e?.slug || null,
+    image: e?.image || null,
+    summary: (e?.summary || '').slice(0, 90),
+    type: e?.type || null,
+  };
+});
 
 const mapRegions = regionList.map((r) => {
   const entities = [...r.list]
@@ -81,7 +96,7 @@ const totalPlaces = all.filter((e) => e.type === 'place' || e.type === 'realm').
   </section>
 
   <section class="wrap map-wide" style="padding-block:.6rem 1.4rem">
-    <MapExplorer client:load regions={mapRegions} markers={markers} />
+    <MapExplorer client:load regions={mapRegions} markers={markers} landmarks={landmarks} />
   </section>
 
   <section class="section wrap" style="padding-top:0">

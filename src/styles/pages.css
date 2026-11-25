@@ -1669,3 +1669,42 @@
   .map-card { width: 232px; grid-template-columns: 72px minmax(0, 1fr); transform: translate(-50%, -108%); }
   .map-card__art { width: 72px; height: 86px; }
 }
+/* ---------- political layer + flat landmark icons ---------- */
+.power-area {
+  opacity: 0.16;
+  stroke: rgba(45, 66, 40, 0.28);
+  stroke-width: 3;
+  stroke-dasharray: 14 10;
+  pointer-events: none;
+  transition: opacity 0.2s;
+}
+.power-layer:hover .power-area { opacity: 0.1; }
+.power-area:hover { opacity: 0.28; pointer-events: auto; }
+.power-label {
+  fill: #3c5033;
+  font-size: 34px;
+  letter-spacing: 5px;
+  font-family: var(--font-body);
+  font-weight: 600;
+  opacity: 0.42;
+  pointer-events: none;
+  paint-order: stroke;
+  stroke: rgba(255, 253, 246, 0.7);
+  stroke-width: 8;
+}
+
+.lm { cursor: pointer; pointer-events: auto; }
+.lm__badge {
+  fill: #fffdf6;
+  stroke: rgba(45, 66, 40, 0.45);
+  stroke-width: 1.4;
+}
+.lm__icon { fill: #33472f; }
+.lm:hover .lm__badge { fill: #eef3e4; stroke: rgba(45, 66, 40, 0.8); }
+.lm:hover .lm__icon { fill: #14251a; }
+.lm--tower .lm__badge { stroke: rgba(120, 74, 60, 0.6); }
+.lm--tower .lm__icon { fill: #6b4136; }
+.lm--port .lm__icon { fill: #3f6274; }
+.lm--port .lm__badge { stroke: rgba(63, 98, 116, 0.55); }
+.lm--ruin .lm__icon { fill: #7a6a55; }
+.lm--gate .lm__icon { fill: #4a5540; }
