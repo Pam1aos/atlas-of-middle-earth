@@ -13,3 +13,8 @@ Thumbs.db
 
 # local backup of the original wiki images (draw source)
 assets/images-original/
+
+# local image-processing scratch
+screenshots/_flat/
+flatten*.log
+flatten*.err
