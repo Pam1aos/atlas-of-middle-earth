@@ -13,6 +13,10 @@ const ENTRIES = path.join(DATA_DIR, '条目');
 const IMAGES = path.join(DATA_DIR, '图片');
 const OUT = path.resolve('src/data');
 const PUB = path.resolve('public/images');
+const VEC_FILE = path.join(OUT, 'image-vec.json');
+const VEC_MAP = fs.existsSync(VEC_FILE) ? JSON.parse(fs.readFileSync(VEC_FILE, 'utf8')) : {};
+/** emblem/map images are served as traced SVG; everything else keeps its webp */
+const imgUrl = (name) => VEC_MAP[name] || `/images/${name}`;
 fs.mkdirSync(path.join(OUT, 'bodies'), { recursive: true });
 fs.mkdirSync(PUB, { recursive: true });
 
@@ -150,7 +154,7 @@ for (const r of raw) {
   }
   // nothing resembling an infobox: treat the whole body as narrative
   if (!titleLine && !image && facts.length === 0) i = startI;
-  e.image = image;
+  e.image = image ? imgUrl(image) : image;
   e.titleLine = titleLine;
   e.facts = facts;
   e.restBlocks = blocks.slice(i);
@@ -308,7 +312,7 @@ function inlineHtml(md) {
   let s = md;
   s = s.replace(/!\[([^\]]*)\]\(([^)\s]+)\)/g, (m, alt, src) => {
     const name = decodeURIComponent(src.split('/').pop()).replace(/\.(jpe?g|png|gif|webp)$/i, '.webp');
-    return `<img class="wiki-img" src="/images/${name}" alt="${unescapeAttr(alt)}" loading="lazy" decoding="async">`;
+    return `<img class="wiki-img" src="${imgUrl(name)}" alt="${unescapeAttr(alt)}" loading="lazy" decoding="async">`;
   });
   s = s.replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, (m, text, href) => {
     if (/^https?:/.test(href)) return `<a class="ext-link" href="${unescapeAttr(href)}" target="_blank" rel="noopener noreferrer">${text}</a>`;
@@ -327,7 +331,7 @@ function bodyHtml(e) {
   // images / links to HTML first so marked keeps them intact
   md = md.replace(/!\[([^\]]*)\]\(([^)\s]+)\)/g, (m, alt, src) => {
     const name = decodeURIComponent(src.split('/').pop()).replace(/\.(jpe?g|png|gif|webp)$/i, '.webp');
-    return `<img class="wiki-img" src="/images/${name}" alt="${unescapeAttr(alt)}" loading="lazy" decoding="async" />`;
+    return `<img class="wiki-img" src="${imgUrl(name)}" alt="${unescapeAttr(alt)}" loading="lazy" decoding="async" />`;
   });
   md = md.replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, (m, text, href) => {
     if (/^https?:/.test(href)) return `<a class="ext-link" href="${unescapeAttr(href)}" target="_blank" rel="noopener noreferrer">${text}</a>`;

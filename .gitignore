@@ -10,3 +10,6 @@ Thumbs.db
 
 .vercel
 .env*
+
+# local backup of the original wiki images (draw source)
+assets/images-original/

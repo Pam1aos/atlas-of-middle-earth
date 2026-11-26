@@ -138,6 +138,24 @@ node scripts/shot.mjs            # 用 CDP 驱动 Edge 截图（见 screenshots/
 - **首页主视觉**：左侧是眉标、巨型标题、正文与胶囊入口；右侧是一张浮起的白卡，内部左为有机色块 + 椭圆裁切的人物图，右为堆叠的数据块（条目 / 关系 / 纪元），对应参考图的 "PRIMARY MOVE / SURFACE BEHAVIOR / VISUAL SIGNATURE" 结构。
 - **组件语言**：胶囊按钮与筛选 chip、圆点类型标识、方形图标的类型入口、悬浮卡片列表。
 - **动效**：只在 hover 抬升与图谱布局时出现，全部被 `prefers-reduced-motion` 关闭。
+
+## 图片处理：平面化重绘
+
+站点上的插图不是原始 wiki 图片，而是本地批量重绘过的版本：
+
+- 原图备份在 `assets/images-original/`（已 gitignore，属于本地素材，不进仓库）
+- 徽章、旗帜、地图类（文件名含 flag/blason/map/herald 等）→ 用 `vtracer` 描成矢量 SVG，输出到 `public/images/vec/`
+- 其余全部 → 边缘保持平滑 + MeanShift + 9 色聚类，输出为同名 `.webp` 覆盖 `public/images/`
+- 矢量文件清单写在 `src/data/image-vec.json`，`scripts/build-data.mjs` 会据此把条目图片与正文里的 `<img>` 指向 `/images/vec/*.svg`
+
+重新生成：
+
+```bash
+python scripts/flatten-images.py        # 全量，约 20 分钟（CPU）
+node scripts/apply-vec-map.mjs          # 把矢量路径写回 entities.json 与正文
+```
+
+依赖：`pip install opencv-python-headless vtracer`。
 ## 服务端函数（可选的大模型整合）
 
 站点主体仍是预渲染的静态页面，只有 `/api/ask` 一个路由按需运行（`prerender = false`），
