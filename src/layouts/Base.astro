@@ -58,8 +58,18 @@ const ogImage = image ? new URL(image, Astro.site ?? SITE.url).href : undefined;
     {showTrees && (
       <div class="page-trees" aria-hidden="true">
         <span class="page-rainbow"></span>
-        <img class="page-tree page-tree--left" src="/images/art/canopy-left.webp" alt="" width="900" height="683" />
-        <img class="page-tree page-tree--right" src="/images/art/canopy-right.webp" alt="" width="900" height="682" />
+        <img class="page-tree page-tree--left" src="/images/art/canopy-left.webp" alt="" width="760" height="577" />
+        <img class="page-tree page-tree--right" src="/images/art/canopy-right.webp" alt="" width="760" height="576" />
+        <span class="edge-zone edge-zone--left"></span>
+        <span class="edge-zone edge-zone--right"></span>
+        <div class="page-spark" aria-hidden="true">
+          {Array.from({ length: 18 }).map((_, i) => (
+            <span
+              class="spark"
+              style={`--x:${6 + (i * 23) % 26}%; --y:${(i * 41) % 92}%; --d:${(i % 6) * 0.32}s; --s:${0.55 + (i % 4) * 0.25}`}
+            ></span>
+          ))}
+        </div>
       </div>
     )}
     <Header />
@@ -68,5 +78,20 @@ const ogImage = image ? new URL(image, Astro.site ?? SITE.url).href : undefined;
     </main>
     {!hideFooter && <Footer />}
     <AgentDock client:idle />
-  </body>
+    <script is:inline>
+    // hover near either page edge lights the star field over the canopies
+    (() => {
+      let raf = 0;
+      const apply = (clientX) => {
+        const w = window.innerWidth;
+        document.body.classList.toggle('edge-hover', clientX < w * 0.18 || clientX > w * 0.82);
+      };
+      window.addEventListener('pointermove', (e) => {
+        if (raf) return;
+        raf = requestAnimationFrame(() => { raf = 0; apply(e.clientX); });
+      }, { passive: true });
+      window.addEventListener('pointerleave', () => document.body.classList.remove('edge-hover'));
+    })();
+  </script>
+</body>
 </html>

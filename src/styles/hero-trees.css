@@ -44,26 +44,27 @@ main#main {
 /* only the foliage shows: the trunks were cropped away in the asset */
 .page-tree {
   position: absolute;
-  top: -6vh;
-  height: 112vh;
-  width: auto;
+  top: 5vh;
+  height: auto;
+  width: clamp(210px, 18vw, 330px);
   max-width: none;
-  mix-blend-mode: multiply;
-  opacity: 0.38;
+  mix-blend-mode: normal;
+  opacity: 0.9;
+  filter: blur(0.6px);
   animation: canopy-breathe 16s ease-in-out infinite;
+  pointer-events: none;
 }
 
 .page-tree--left {
-  left: -8vw;
+  left: -2vw;
   transform: scaleX(-1);
   -webkit-mask-image: linear-gradient(to right, #000 30%, rgba(0, 0, 0, 0.45) 56%, transparent 78%);
   mask-image: linear-gradient(to right, #000 30%, rgba(0, 0, 0, 0.45) 56%, transparent 78%);
 }
 
 .page-tree--right {
-  right: -4vw;
-  top: -12vh;
-  height: 104vh;
+  right: -2vw;
+  top: 9vh;
   animation-delay: -7s;
   -webkit-mask-image: linear-gradient(to left, #000 30%, rgba(0, 0, 0, 0.45) 56%, transparent 78%);
   mask-image: linear-gradient(to left, #000 30%, rgba(0, 0, 0, 0.45) 56%, transparent 78%);
@@ -72,6 +73,34 @@ main#main {
 @keyframes canopy-breathe {
   0%, 100% { translate: 0 0; }
   50% { translate: 0 -12px; }
+}
+
+/* invisible strips at the page edges: hovering them lights the sparkles */
+.edge-zone {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 17vw;
+  pointer-events: auto;
+}
+.edge-zone--left { left: 0; }
+.edge-zone--right { right: 0; }
+
+.page-spark {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 2;
+}
+
+body.edge-hover .page-spark .spark {
+  animation: spark-twinkle 2.8s ease-in-out infinite;
+  animation-delay: var(--d);
+}
+
+body.edge-hover .page-rainbow {
+  opacity: 0.72;
+  transition: opacity 0.6s var(--ease);
 }
 
 /* ---------------- hero stage & the book ---------------- */
