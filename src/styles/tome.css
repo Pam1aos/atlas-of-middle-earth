@@ -1,0 +1,262 @@
+/* ============================================================
+   The tome — closed, gilded, violet leather with a glowing gem
+   ============================================================ */
+.tome {
+  position: relative;
+  width: clamp(190px, 19vw, 260px);
+  aspect-ratio: 0.76 / 1;
+  perspective: 1100px;
+  animation: tome-float 9s ease-in-out infinite;
+}
+
+@keyframes tome-float {
+  0%, 100% { transform: translateY(0) rotateZ(0deg); }
+  50% { transform: translateY(-14px) rotateZ(-1.2deg); }
+}
+
+.tome__aurora {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 190%;
+  height: 190%;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background:
+    radial-gradient(closest-side, rgba(214, 186, 255, 0.55), rgba(178, 148, 232, 0.22) 52%, transparent 74%),
+    radial-gradient(closest-side at 60% 40%, rgba(255, 231, 175, 0.35), transparent 70%);
+  filter: blur(18px);
+  animation: aurora-breathe 7s ease-in-out infinite;
+  z-index: -1;
+}
+
+@keyframes aurora-breathe {
+  0%, 100% { opacity: 0.7; transform: translate(-50%, -50%) scale(0.94); }
+  50% { opacity: 1; transform: translate(-50%, -50%) scale(1.06); }
+}
+
+.tome__body {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+  transform: rotateX(14deg) rotateY(-26deg) rotateZ(-5deg);
+  transition: transform 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.hero-stage:hover .tome__body,
+.hero-stage:focus-visible .tome__body {
+  transform: rotateX(10deg) rotateY(-18deg) rotateZ(-3deg) scale(1.04);
+}
+
+/* page block peeking out on the right and bottom */
+.tome__pages {
+  position: absolute;
+  inset: 3% -4% -3% 6%;
+  border-radius: 4px 10px 10px 4px;
+  background:
+    repeating-linear-gradient(to bottom, #f6efdb 0 2px, #e6dcc0 2px 3px);
+  transform: translateZ(-10px);
+  box-shadow: 0 18px 30px -20px rgba(30, 20, 50, 0.8);
+}
+
+/* violet leather cover with gold tooling */
+.tome__cover {
+  position: absolute;
+  inset: 0;
+  border-radius: 6px 16px 16px 6px;
+  background:
+    radial-gradient(120% 90% at 30% 20%, #8f7fc4 0%, #6f5fa4 42%, #4d4176 78%, #3b315c 100%);
+  box-shadow:
+    inset 0 0 0 1px rgba(244, 216, 150, 0.55),
+    inset 0 0 0 2px rgba(60, 45, 90, 0.35),
+    inset -10px 0 22px -14px rgba(20, 12, 40, 0.75),
+    0 26px 40px -24px rgba(30, 20, 55, 0.85);
+  transform-style: preserve-3d;
+  overflow: hidden;
+}
+
+.tome__cover::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(circle at 18% 82%, rgba(255, 255, 255, 0.08) 0 2px, transparent 3px),
+    radial-gradient(circle at 62% 18%, rgba(255, 255, 255, 0.06) 0 2px, transparent 3px),
+    repeating-linear-gradient(115deg, rgba(255, 255, 255, 0.03) 0 1px, transparent 1px 5px);
+  pointer-events: none;
+}
+
+/* gold border, inset from the edge */
+.tome__frame {
+  position: absolute;
+  inset: 7px;
+  border-radius: 4px 12px 12px 4px;
+  border: 1.5px solid rgba(240, 210, 141, 0.85);
+  box-shadow:
+    inset 0 0 0 3px rgba(58, 44, 92, 0.55),
+    inset 0 0 0 4.5px rgba(240, 210, 141, 0.4);
+  pointer-events: none;
+}
+
+/* the oval medallion with its gem */
+.tome__medallion {
+  position: absolute;
+  left: 50%;
+  top: 47%;
+  width: 58%;
+  height: 62%;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background:
+    radial-gradient(closest-side, rgba(150, 120, 210, 0.5), rgba(90, 70, 140, 0.35) 70%, transparent 100%);
+  border: 3px solid rgba(242, 212, 143, 0.92);
+  box-shadow:
+    0 0 0 3px rgba(72, 55, 110, 0.6),
+    0 0 22px rgba(198, 160, 255, 0.5),
+    inset 0 0 18px rgba(210, 180, 255, 0.35);
+  display: grid;
+  place-items: center;
+}
+
+.tome__gem {
+  position: relative;
+  width: 34%;
+  height: 34%;
+  border-radius: 50%;
+  background:
+    conic-gradient(from 20deg, #d9c4ff, #9f7be6 18%, #f3e9ff 34%, #b18cf0 52%, #efe2ff 70%, #8a5fd6 86%, #d9c4ff 100%);
+  box-shadow:
+    0 0 14px 3px rgba(188, 148, 255, 0.55),
+    0 0 34px 10px rgba(140, 100, 220, 0.32),
+    inset 0 0 8px rgba(255, 255, 255, 0.75),
+    inset 0 -3px 6px rgba(80, 50, 140, 0.5);
+  animation: gem-pulse 3.6s ease-in-out infinite;
+}
+
+/* facet highlight + gold ring so it reads as a cut stone, not a bulb */
+.tome__gem::before {
+  content: '';
+  position: absolute;
+  left: 22%;
+  top: 16%;
+  width: 30%;
+  height: 26%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.95), transparent 70%);
+  filter: blur(0.5px);
+}
+
+.tome__gem::after {
+  content: '';
+  position: absolute;
+  inset: -16%;
+  border-radius: 50%;
+  border: 1.5px solid rgba(245, 220, 156, 0.75);
+  box-shadow: 0 0 10px rgba(245, 220, 156, 0.4);
+}
+
+@keyframes gem-pulse {
+  0%, 100% { transform: scale(0.94); filter: brightness(1); }
+  50% { transform: scale(1.08); filter: brightness(1.35); }
+}
+
+.hero-stage:hover .tome__gem,
+.hero-stage:focus-visible .tome__gem {
+  animation-duration: 1.6s;
+}
+
+/* gold corner pieces */
+.tome__corner {
+  position: absolute;
+  width: 15%;
+  height: 11%;
+  border: 2.5px solid rgba(246, 219, 152, 0.95);
+  filter: drop-shadow(0 0 4px rgba(246, 219, 152, 0.45));
+}
+.tome__corner::after {
+  content: '';
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #fdf1c9, #c9a25a);
+  box-shadow: 0 0 6px rgba(253, 241, 201, 0.8);
+}
+.tome__corner--tl { left: 10px; top: 10px; border-right: 0; border-bottom: 0; border-radius: 3px 0 0 0; }
+.tome__corner--tr { right: 10px; top: 10px; border-left: 0; border-bottom: 0; border-radius: 0 12px 0 0; }
+.tome__corner--bl { left: 10px; bottom: 10px; border-right: 0; border-top: 0; border-radius: 0 0 0 3px; }
+.tome__corner--br { right: 10px; bottom: 10px; border-left: 0; border-top: 0; border-radius: 0 0 12px 0; }
+
+.tome__clasp {
+  position: absolute;
+  right: -2px;
+  top: 44%;
+  width: 9px;
+  height: 22%;
+  border-radius: 3px;
+  background: linear-gradient(180deg, #f7e2ac, #c9a25a 55%, #8a6a2c);
+  box-shadow: 0 2px 8px rgba(20, 10, 40, 0.55);
+}
+
+/* spine along the left edge */
+.tome__spine {
+  position: absolute;
+  left: -6px;
+  top: 2%;
+  bottom: -2%;
+  width: 14px;
+  border-radius: 6px 0 0 6px;
+  background: linear-gradient(90deg, #2f2650 0%, #4b3d78 45%, #6a58a0 100%);
+  box-shadow: inset 0 0 0 1px rgba(240, 210, 141, 0.35);
+  transform: translateZ(2px);
+}
+
+/* ribbons */
+.tome__ribbon {
+  position: absolute;
+  width: 7px;
+  height: 30%;
+  border-radius: 4px 4px 1px 1px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(224, 210, 255, 0.55));
+  box-shadow: 0 6px 14px -9px rgba(30, 20, 55, 0.65);
+  transform-origin: top center;
+  clip-path: polygon(0 0, 100% 0, 100% 92%, 50% 100%, 0 92%);
+  opacity: 0.92;
+}
+.tome__ribbon--1 {
+  left: 12%;
+  top: -5%;
+  transform: translateZ(16px) rotate(-24deg);
+  animation: ribbon-sway 7s ease-in-out infinite;
+}
+.tome__ribbon--2 {
+  right: 16%;
+  top: -2%;
+  height: 26%;
+  transform: translateZ(12px) rotate(19deg);
+  animation: ribbon-sway 8.5s ease-in-out infinite reverse;
+}
+
+@keyframes ribbon-sway {
+  0%, 100% { rotate: -3deg; }
+  50% { rotate: 3deg; }
+}
+
+.tome__shadow {
+  position: absolute;
+  left: 50%;
+  bottom: -22px;
+  width: 120%;
+  height: 26px;
+  transform: translateX(-50%);
+  background: radial-gradient(closest-side, rgba(48, 34, 82, 0.35), transparent 72%);
+  filter: blur(5px);
+}
+
+@media (max-width: 900px) {
+  .tome { width: clamp(170px, 44vw, 230px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tome, .tome__aurora, .tome__gem, .tome__ribbon { animation: none !important; }
+}
