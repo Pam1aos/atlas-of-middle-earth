@@ -106,15 +106,21 @@ body.edge-hover .page-rainbow {
 /* ---------------- hero stage & the book ---------------- */
 .hero--trees { position: relative; }
 
-/* keep the headline crisp where the canopy sits behind it */
+/* no veil: the canopy may sit behind the copy, so the text itself gets darker
+   and carries a faint paper halo to stay legible */
 .hero-copy { position: relative; }
-.hero-copy::before {
-  content: '';
-  position: absolute;
-  inset: -8% -6% -8% -10%;
-  background: radial-gradient(70% 70% at 30% 45%, rgba(236, 241, 229, 0.92), rgba(236, 241, 229, 0.55) 55%, transparent 78%);
-  z-index: -1;
-  pointer-events: none;
+.hero--trees .hero-copy .lede {
+  color: #1b2a1d;
+  font-weight: 500;
+  text-shadow: 0 0 14px rgba(236, 241, 229, 0.92), 0 0 34px rgba(236, 241, 229, 0.75);
+}
+.hero--trees .hero-copy .eyebrow {
+  color: #3c5a34;
+  text-shadow: 0 0 12px rgba(236, 241, 229, 0.9);
+}
+.hero--trees .hero-copy .hero-sub {
+  color: #33472f;
+  text-shadow: 0 0 14px rgba(236, 241, 229, 0.9);
 }
 
 .hero-stage {
