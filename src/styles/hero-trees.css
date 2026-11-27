@@ -1,0 +1,323 @@
+/* ============================================================
+   Two Trees as a page-wide background + floating grimoire in the hero
+   ============================================================ */
+
+.page-trees {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+main#main {
+  position: relative;
+  z-index: 1;
+}
+
+.page-rainbow {
+  position: absolute;
+  left: 50%;
+  top: -18vh;
+  width: 120vw;
+  height: 90vh;
+  transform: translateX(-50%);
+  background: conic-gradient(
+    from 200deg at 50% 0%,
+    rgba(255, 214, 170, 0.45),
+    rgba(196, 226, 255, 0.42),
+    rgba(204, 240, 212, 0.4),
+    rgba(255, 224, 244, 0.42),
+    rgba(255, 214, 170, 0.45)
+  );
+  filter: blur(80px);
+  opacity: 0.5;
+  mix-blend-mode: screen;
+  animation: rainbow-slow 40s linear infinite;
+}
+
+@keyframes rainbow-slow {
+  0% { transform: translateX(-50%) rotate(0deg); }
+  100% { transform: translateX(-50%) rotate(360deg); }
+}
+
+/* only the foliage shows: the trunks were cropped away in the asset */
+.page-tree {
+  position: absolute;
+  top: -6vh;
+  height: 112vh;
+  width: auto;
+  max-width: none;
+  mix-blend-mode: multiply;
+  opacity: 0.38;
+  animation: canopy-breathe 16s ease-in-out infinite;
+}
+
+.page-tree--left {
+  left: -8vw;
+  transform: scaleX(-1);
+  -webkit-mask-image: linear-gradient(to right, #000 30%, rgba(0, 0, 0, 0.45) 56%, transparent 78%);
+  mask-image: linear-gradient(to right, #000 30%, rgba(0, 0, 0, 0.45) 56%, transparent 78%);
+}
+
+.page-tree--right {
+  right: -4vw;
+  top: -12vh;
+  height: 104vh;
+  animation-delay: -7s;
+  -webkit-mask-image: linear-gradient(to left, #000 30%, rgba(0, 0, 0, 0.45) 56%, transparent 78%);
+  mask-image: linear-gradient(to left, #000 30%, rgba(0, 0, 0, 0.45) 56%, transparent 78%);
+}
+
+@keyframes canopy-breathe {
+  0%, 100% { translate: 0 0; }
+  50% { translate: 0 -12px; }
+}
+
+/* ---------------- hero stage & the book ---------------- */
+.hero--trees { position: relative; }
+
+/* keep the headline crisp where the canopy sits behind it */
+.hero-copy { position: relative; }
+.hero-copy::before {
+  content: '';
+  position: absolute;
+  inset: -8% -6% -8% -10%;
+  background: radial-gradient(70% 70% at 30% 45%, rgba(236, 241, 229, 0.92), rgba(236, 241, 229, 0.55) 55%, transparent 78%);
+  z-index: -1;
+  pointer-events: none;
+}
+
+.hero-stage {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-height: clamp(320px, 34vw, 440px);
+  perspective: 1200px;
+  outline: none;
+}
+
+.book {
+  position: relative;
+  width: clamp(210px, 21vw, 280px);
+  aspect-ratio: 1.34 / 1;
+  transform-style: preserve-3d;
+  animation: book-float 8s ease-in-out infinite;
+}
+
+@keyframes book-float {
+  0%, 100% { transform: translateY(0) rotateZ(0deg); }
+  50% { transform: translateY(-12px) rotateZ(-1deg); }
+}
+
+.book__inner {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+  transform: rotateX(56deg) rotateZ(-16deg);
+  transition: transform 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.hero-stage:hover .book__inner,
+.hero-stage:focus-visible .book__inner {
+  transform: rotateX(42deg) rotateZ(-11deg) scale(1.06);
+}
+
+/* leather binding, seen around the page block */
+.book__board {
+  position: absolute;
+  inset: -7px;
+  border-radius: 10px;
+  background: linear-gradient(150deg, #3f5a34, #26371f 70%);
+  box-shadow: 0 24px 38px -22px rgba(20, 37, 26, 0.65), inset 0 0 0 1px rgba(201, 165, 94, 0.4);
+}
+.book__board--back { transform: translateZ(-12px); }
+.book__board--front { display: none; }
+
+.book__pages {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+}
+
+.book__leafbook {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+}
+
+.book__page {
+  position: relative;
+  flex: 1;
+  padding: 14px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  background:
+    repeating-linear-gradient(to bottom, transparent 0 16px, rgba(126, 138, 112, 0.18) 16px 17px),
+    linear-gradient(160deg, #fffdf4 0%, #f8f3e2 60%, #f0e7d0 100%);
+  transform-style: preserve-3d;
+}
+
+.book__page--left {
+  border-radius: 9px 3px 3px 9px;
+  transform: rotateY(7deg);
+  transform-origin: right center;
+  box-shadow: inset -20px 0 26px -20px rgba(60, 48, 30, 0.5);
+}
+
+.book__page--right {
+  border-radius: 3px 9px 9px 3px;
+  transform: rotateY(-7deg);
+  transform-origin: left center;
+  box-shadow: inset 20px 0 26px -20px rgba(60, 48, 30, 0.5);
+}
+
+.book__rule {
+  height: 3px;
+  border-radius: 2px;
+  background: linear-gradient(to right, rgba(90, 110, 78, 0.45), rgba(90, 110, 78, 0.1));
+}
+.book__rule--short { width: 60%; }
+
+.book__gutter {
+  position: absolute;
+  left: 50%;
+  top: 1%;
+  width: 14px;
+  height: 98%;
+  transform: translateX(-50%) translateZ(1px);
+  background: linear-gradient(to right, transparent, rgba(78, 62, 36, 0.45), transparent);
+  filter: blur(1.5px);
+  pointer-events: none;
+}
+
+.book__sigil {
+  position: absolute;
+  left: 50%;
+  top: 14%;
+  transform: translateX(-50%) translateZ(52px);
+  font-size: 1.4rem;
+  color: #efd08a;
+  text-shadow: 0 0 14px rgba(239, 208, 138, 0.95), 0 0 34px rgba(239, 208, 138, 0.5);
+  animation: sigil-pulse 4.6s ease-in-out infinite;
+}
+
+@keyframes sigil-pulse {
+  0%, 100% { opacity: 0.65; transform: translateX(-50%) translateZ(52px) scale(1); }
+  50% { opacity: 1; transform: translateX(-50%) translateZ(58px) scale(1.14); }
+}
+
+.book__ribbon {
+  position: absolute;
+  left: 52%;
+  top: 88%;
+  width: 9px;
+  height: 46px;
+  background: linear-gradient(#b4463c, #8b2f29);
+  transform: translateZ(6px) rotateZ(5deg);
+  border-radius: 0 0 3px 3px;
+  box-shadow: 0 8px 14px -10px rgba(0, 0, 0, 0.7);
+}
+
+.book__halo {
+  position: absolute;
+  left: 50%;
+  top: 55%;
+  width: 160%;
+  height: 160%;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(255, 236, 186, 0.8), rgba(255, 224, 156, 0.25) 55%, transparent 76%);
+  filter: blur(8px);
+  z-index: -1;
+  animation: halo-breathe 7s ease-in-out infinite;
+}
+
+@keyframes halo-breathe {
+  0%, 100% { opacity: 0.5; transform: translate(-50%, -50%) scale(0.92); }
+  50% { opacity: 0.9; transform: translate(-50%, -50%) scale(1.06); }
+}
+
+.book__shadow {
+  position: absolute;
+  left: 50%;
+  bottom: -26px;
+  width: 130%;
+  height: 30px;
+  transform: translateX(-50%);
+  background: radial-gradient(closest-side, rgba(45, 64, 39, 0.32), transparent 72%);
+  filter: blur(5px);
+}
+
+/* ---------------- star particles on hover ---------------- */
+.hero-spark {
+  position: absolute;
+  inset: -12% -8%;
+  pointer-events: none;
+  z-index: 3;
+}
+
+.spark {
+  position: absolute;
+  left: var(--x);
+  top: var(--y);
+  width: calc(5px * var(--s));
+  height: calc(5px * var(--s));
+  border-radius: 50%;
+  background: radial-gradient(circle, #fff 0%, #ffeec2 44%, rgba(255, 238, 194, 0) 74%);
+  box-shadow: 0 0 12px 4px rgba(255, 236, 180, 0.7);
+  opacity: 0;
+  transform: scale(0.35);
+}
+
+.hero-stage:hover .spark,
+.hero-stage:focus-visible .spark {
+  animation: spark-twinkle 2.4s ease-in-out infinite;
+  animation-delay: var(--d);
+}
+
+@keyframes spark-twinkle {
+  0%, 100% { opacity: 0; transform: scale(0.3) translateY(6px); }
+  32% { opacity: 1; transform: scale(1.2) translateY(-12px); }
+  64% { opacity: 0.5; transform: scale(0.75) translateY(-22px); }
+}
+
+/* rainbow bloom behind the book on hover */
+.hero-stage::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 52%;
+  width: 92%;
+  height: 92%;
+  transform: translate(-50%, -50%) scale(0.88);
+  border-radius: 50%;
+  background: conic-gradient(
+    from 60deg,
+    rgba(255, 214, 176, 0.55), rgba(184, 220, 255, 0.5),
+    rgba(198, 238, 206, 0.5), rgba(255, 220, 246, 0.5),
+    rgba(255, 214, 176, 0.55)
+  );
+  filter: blur(52px);
+  opacity: 0;
+  transition: opacity 0.6s var(--ease);
+  pointer-events: none;
+  z-index: -1;
+}
+
+.hero-stage:hover::after,
+.hero-stage:focus-visible::after { opacity: 0.7; }
+
+@media (max-width: 900px) {
+  .page-tree { height: 82vh; top: -2vh; opacity: 0.34; }
+  .page-tree--left { left: -26vw; }
+  .page-tree--right { right: -26vw; }
+  .hero-stage { min-height: 300px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .book, .book__halo, .book__sigil, .page-tree, .page-rainbow { animation: none !important; }
+  .hero-stage:hover .spark, .hero-stage:focus-visible .spark { animation: none !important; opacity: 0.85; }
+}

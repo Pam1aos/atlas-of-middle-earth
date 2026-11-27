@@ -1,6 +1,7 @@
 ---
 import '../styles/global.css';
 import '../styles/pages.css';
+import '../styles/hero-trees.css';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 import AgentDock from '../components/AgentDock.tsx';
@@ -15,6 +16,8 @@ interface Props {
 }
 
 const { title, description = SITE.description, image, noindex = false, hideFooter = false } = Astro.props;
+const showTrees = !Astro.url.pathname.startsWith('/atlas') && !Astro.url.pathname.startsWith('/timeline');
+
 const pageTitle = title ? `${title} · ${SITE.name}` : `${SITE.name} · ${SITE.nameEn}`;
 const canonical = new URL(Astro.url.pathname, Astro.site ?? SITE.url).href;
 const ogImage = image ? new URL(image, Astro.site ?? SITE.url).href : undefined;
@@ -52,6 +55,13 @@ const ogImage = image ? new URL(image, Astro.site ?? SITE.url).href : undefined;
   </head>
   <body>
     <a href="#main" class="sr-only">跳到主要内容</a>
+    {showTrees && (
+      <div class="page-trees" aria-hidden="true">
+        <span class="page-rainbow"></span>
+        <img class="page-tree page-tree--left" src="/images/art/canopy-left.webp" alt="" width="900" height="683" />
+        <img class="page-tree page-tree--right" src="/images/art/canopy-right.webp" alt="" width="900" height="682" />
+      </div>
+    )}
     <Header />
     <main id="main">
       <slot />

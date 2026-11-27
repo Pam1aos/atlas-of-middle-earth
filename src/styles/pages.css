@@ -1708,3 +1708,187 @@
 .lm--port .lm__badge { stroke: rgba(63, 98, 116, 0.55); }
 .lm--ruin .lm__icon { fill: #7a6a55; }
 .lm--gate .lm__icon { fill: #4a5540; }
+/* ============================================================
+   Hero scene — the Two Trees, breathing-stone motion
+   ============================================================ */
+.hero-scene {
+  position: relative;
+  min-height: clamp(380px, 41vw, 520px);
+  border-radius: 34px;
+  overflow: hidden;
+  isolation: isolate;
+  background:
+    radial-gradient(120% 90% at 50% 8%, #fbf8ec 0%, #eef2e4 46%, #dfe9d6 100%);
+  box-shadow:
+    inset 0 0 0 1px rgba(79, 122, 52, 0.08),
+    0 30px 60px -40px rgba(20, 37, 26, 0.45);
+}
+
+/* faint knotwork horizon so the panel reads as an illuminated page */
+.hero-scene::before {
+  content: '';
+  position: absolute;
+  inset: -20% -10% auto;
+  height: 70%;
+  background: radial-gradient(60% 60% at 50% 100%, rgba(201, 165, 94, 0.22), transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.tree {
+  position: absolute;
+  z-index: 1;
+  width: 88%;
+  bottom: -2%;
+  transform: translateY(var(--drift, 0px));
+  transition: filter 0.5s var(--ease);
+  will-change: transform;
+}
+
+.tree--telperion { left: -10%; }
+.tree--laurelin {
+  right: -12%;
+  transform: translateY(var(--drift-2, 0px)) scaleX(-1);
+  width: 94%;
+  bottom: -6%;
+}
+
+.tree__img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 24px;
+  mix-blend-mode: multiply;
+  opacity: 0.96;
+  -webkit-mask-image: radial-gradient(closest-side at 50% 60%, #000 66%, transparent 94%);
+  mask-image: radial-gradient(closest-side at 50% 60%, #000 66%, transparent 94%);
+  animation: tree-breathe 9s ease-in-out infinite;
+  position: relative;
+  z-index: 1;
+  transform-origin: 50% 92%;
+}
+
+.tree--telperion .tree__img {
+  filter: saturate(0.14) brightness(1.16) contrast(0.9) sepia(0.22) hue-rotate(186deg);
+  animation-duration: 11s;
+}
+
+.tree--laurelin .tree__img {
+  filter: saturate(1.45) brightness(1.1) contrast(1.02) sepia(0.62) hue-rotate(-24deg);
+  animation-duration: 8s;
+  animation-delay: -3s;
+}
+
+@keyframes tree-breathe {
+  0%, 100% { transform: scale(1) translateY(0); }
+  50% { transform: scale(1.016) translateY(-5px); }
+}
+
+/* halo behind each tree */
+.tree__glow {
+  position: absolute;
+  left: 50%;
+  top: 42%;
+  width: 92%;
+  height: 78%;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 0;
+  background: radial-gradient(closest-side, rgba(233, 240, 255, 0.95), rgba(200, 220, 240, 0.35) 55%, transparent 78%);
+  animation: glow-breathe 9s ease-in-out infinite;
+  opacity: 0.85;
+}
+
+.tree--laurelin .tree__glow {
+  background: radial-gradient(closest-side, rgba(255, 236, 190, 0.95), rgba(240, 202, 128, 0.35) 55%, transparent 78%);
+  animation-delay: -3.5s;
+  animation-duration: 8s;
+}
+
+@keyframes glow-breathe {
+  0%, 100% { opacity: 0.55; transform: translate(-50%, -50%) scale(0.94); }
+  50% { opacity: 0.95; transform: translate(-50%, -50%) scale(1.06); }
+}
+
+/* light sweeping across the leaves when the pointer enters */
+.tree__sheen {
+  position: absolute;
+  inset: 0;
+  border-radius: 24px;
+  pointer-events: none;
+  background: linear-gradient(105deg, transparent 34%, rgba(255, 255, 255, 0.92) 48%, rgba(255, 246, 214, 0.55) 54%, transparent 68%);
+  background-size: 240% 100%;
+  background-position: 140% 0;
+  opacity: 0;
+  mix-blend-mode: screen;
+  -webkit-mask-image: radial-gradient(closest-side at 50% 58%, #000 55%, transparent 88%);
+  mask-image: radial-gradient(closest-side at 50% 58%, #000 55%, transparent 88%);
+}
+
+.hero-scene:hover .tree__sheen {
+  animation: sheen-sweep 0.9s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  opacity: 1;
+}
+
+@keyframes sheen-sweep {
+  from { background-position: 140% 0; }
+  to { background-position: -40% 0; }
+}
+
+.hero-scene:hover .tree--telperion .tree__img { filter: saturate(0.2) brightness(1.28) contrast(0.88) sepia(0.18) hue-rotate(188deg); }
+.hero-scene:hover .tree--laurelin .tree__img { filter: saturate(1.6) brightness(1.22) contrast(1.02) sepia(0.7) hue-rotate(-26deg); }
+.hero-scene:hover { box-shadow: inset 0 0 0 1px rgba(201, 165, 94, 0.25), inset 0 0 90px rgba(255, 238, 196, 0.55), 0 30px 60px -40px rgba(20, 37, 26, 0.45); }
+.hero-scene:hover .tree__glow { opacity: 1; transform: translate(-50%, -50%) scale(1.1); transition: transform 0.6s var(--ease), opacity 0.6s var(--ease); }
+
+/* drifting light motes */
+.tree-dot {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #fff 0%, rgba(255, 244, 214, 0.9) 45%, transparent 70%);
+  box-shadow: 0 0 14px 4px rgba(255, 235, 186, 0.55);
+  animation: mote 7s ease-in-out infinite;
+  pointer-events: none;
+}
+.tree-dot--w { left: 30%; top: 34%; width: 5px; height: 5px; box-shadow: 0 0 14px 4px rgba(214, 234, 255, 0.6); animation-delay: -2s; }
+.tree-dot--e { right: 26%; top: 26%; animation-duration: 8.5s; }
+
+@keyframes mote {
+  0%, 100% { transform: translate(0, 0) scale(0.8); opacity: 0.35; }
+  35% { transform: translate(6px, -14px) scale(1.15); opacity: 1; }
+  70% { transform: translate(-5px, -26px) scale(0.9); opacity: 0.5; }
+}
+
+/* glass labels */
+.tree-label {
+  position: absolute;
+  top: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 0.45rem 0.8rem;
+  border-radius: 14px;
+  background: rgba(255, 253, 246, 0.62);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  box-shadow: 0 8px 24px -18px rgba(20, 37, 26, 0.6);
+  z-index: 3;
+}
+.tree-label strong { font-size: 0.82rem; letter-spacing: 0.02em; }
+.tree-label span { font-size: 0.64rem; color: var(--muted); letter-spacing: 0.06em; }
+.tree-label--silver { left: 18px; }
+.tree-label--gold { right: 18px; text-align: right; }
+
+@media (max-width: 900px) {
+  .hero-scene { min-height: 320px; border-radius: 26px; }
+  .tree { width: 74%; }
+  .tree--laurelin { width: 80%; }
+  .tree-label strong { font-size: 0.74rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tree__img, .tree__glow, .tree-dot { animation: none !important; }
+  .hero-scene:hover .tree__sheen { animation: none; }
+}

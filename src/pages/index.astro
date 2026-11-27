@@ -20,12 +20,7 @@ const featured = ['阿拉贡', '甘道夫', '夏尔', '魔戒大战', '至尊戒
   .map((t) => all.find((e) => e.title === t))
   .filter(Boolean);
 
-const HERO_POOL = all
-  .filter((e) => e.image && ['character', 'place', 'realm', 'item'].includes(e.type) && e.citedBy >= 60)
-  .sort((a, b) => b.citedBy - a.citedBy)
-  .slice(0, 140)
-  .map((e) => ({ s: e.slug, t: e.title, im: e.image, ty: e.type, label: typeMeta(e.type).label, color: typeMeta(e.type).color }));
-
+// illustrated entries used to refresh the "six to read first" grid on each visit
 const FEATURE_POOL = all
   .filter((e) => e.image && ['character', 'place', 'realm', 'item', 'event'].includes(e.type))
   .sort((a, b) => b.citedBy - a.citedBy)
@@ -35,13 +30,12 @@ const FEATURE_POOL = all
     su: (e.summary || '').slice(0, 110), label: typeMeta(e.type).label, color: typeMeta(e.type).color,
   }));
 
-const heroImage = (all.find((e) => e.title === '阿拉贡') || withImage[0]) as any;
 
 const fmt = (n: number) => n.toLocaleString('zh-CN');
 ---
 <Base description={`中洲志：${fmt(stats.entities)} 条中洲条目、${fmt(stats.relations)} 条人物与地点关系，可检索、可漫游的托尔金世界档案。`}>
 
-  <section class="hero wrap">
+  <section class="hero wrap hero--trees">
     <div class="hero-grid">
       <div class="hero-copy">
         <div class="eyebrow">Atlas of Middle-earth · {fmt(stats.entities)} entries</div>
@@ -55,7 +49,6 @@ const fmt = (n: number) => n.toLocaleString('zh-CN');
         </p>
         <div class="hero-actions">
           <a class="btn" href="/browse/">探索世界</a>
-
         </div>
         <div class="hero-pills">
           <a class="chip" href="/browse/?type=character">人物 {fmt(typeCounts.character)}</a>
@@ -65,51 +58,45 @@ const fmt = (n: number) => n.toLocaleString('zh-CN');
         </div>
       </div>
 
-      <div class="hero-card">
-        <div class="hero-card__top">
-          <span class="hero-card__dot" aria-hidden="true"></span>
-          <div class="hero-card__tags" aria-hidden="true">
-            <span>条目</span><span>关系</span><span>纪元</span>
+      <div class="hero-stage" id="hero-stage" tabIndex={0} role="img" aria-label="浮空的魔法书，两侧是泰尔佩瑞安与罗瑞林">
+        <div class="book" id="book">
+          <div class="book__halo" aria-hidden="true"></div>
+          <div class="book__inner">
+            <div class="book__board book__board--back"></div>
+            <div class="book__pages">
+              <div class="book__leafbook">
+                <div class="book__page book__page--left">
+                  <span class="book__rule"></span>
+                  <span class="book__rule"></span>
+                  <span class="book__rule"></span>
+                </div>
+                <div class="book__page book__page--right">
+                  <span class="book__rule"></span>
+                  <span class="book__rule"></span>
+                  <span class="book__rule book__rule--short"></span>
+                </div>
+              </div>
+              <div class="book__gutter" aria-hidden="true"></div>
+            </div>
+            <div class="book__board book__board--front"></div>
+            <div class="book__sigil" aria-hidden="true">✧</div>
+            <div class="book__ribbon" aria-hidden="true"></div>
           </div>
+          <div class="book__shadow" aria-hidden="true"></div>
         </div>
-        <div class="hero-card__body">
-          <div class="hero-art">
-            <svg class="blob" viewBox="0 0 400 420" aria-hidden="true" preserveAspectRatio="xMidYMid slice">
-              <ellipse cx="150" cy="120" rx="120" ry="96" fill="#5f8a3e" opacity=".55" />
-              <ellipse cx="235" cy="185" rx="105" ry="120" fill="#86a05c" opacity=".45" />
-              <ellipse cx="300" cy="300" rx="96" ry="78" fill="#c9a17c" opacity=".55" />
-              <ellipse cx="140" cy="330" rx="120" ry="70" fill="#e0c6a4" opacity=".6" />
-            </svg>
-            <a class="hero-art__frame" id="hero-frame" href={`/entry/${encodeURIComponent(heroImage.slug)}/`}>
-              <img id="hero-img" src={heroImage.image} alt={`${heroImage.title}的插图`} width="480" height="600" fetchpriority="high" />
-            </a>
-            <div class="hero-art__tag" id="hero-tag">
-              <a id="hero-name" href={`/entry/${encodeURIComponent(heroImage.slug)}/`}>{heroImage.title}</a>
-              <span class="tbadge" id="hero-type" style={`--tb:${typeMeta(heroImage?.type).color}`}>{typeMeta(heroImage?.type).label}</span>
-            </div>
-          </div>
 
-          <div class="hero-meta">
-            <div class="meta-block">
-              <span class="meta-block__label">Entries</span>
-              <strong class="meta-block__value">{fmt(stats.entities)}</strong>
-              <span class="meta-block__note">正文条目</span>
-            </div>
-            <div class="meta-block">
-              <span class="meta-block__label">Relations</span>
-              <strong class="meta-block__value">{fmt(stats.relations)}</strong>
-              <span class="meta-block__note">有出处的关系</span>
-            </div>
-            <div class="meta-block">
-              <span class="meta-block__label">Span</span>
-              <strong class="meta-block__value">{ERAS.length}</strong>
-              <span class="meta-block__note">个纪元</span>
-            </div>
-          </div>
+        <div class="hero-spark" id="hero-spark" aria-hidden="true">
+          {Array.from({ length: 22 }).map((_, i) => (
+            <span
+              class="spark"
+              style={`--x:${(i * 37) % 100}%; --y:${(i * 53) % 100}%; --d:${(i % 7) * 0.28}s; --s:${0.5 + (i % 5) * 0.22}`}
+            ></span>
+          ))}
         </div>
       </div>
     </div>
   </section>
+
 
   <section class="section wrap" aria-labelledby="eras-h">
     <div class="section-head">
@@ -192,7 +179,6 @@ const fmt = (n: number) => n.toLocaleString('zh-CN');
     </div>
   </section>
 
-  <script type="application/json" id="hero-pool" set:html={JSON.stringify(HERO_POOL)} />
   <script type="application/json" id="feature-pool" set:html={JSON.stringify(FEATURE_POOL)} />
   <script is:inline>
     (() => {
@@ -202,88 +188,60 @@ const fmt = (n: number) => n.toLocaleString('zh-CN');
       let pool = [];
       try { pool = JSON.parse(el.textContent || '[]'); } catch { return; }
       if (pool.length < 6) return;
-      // shuffle a copy and take six, so the selection differs on every visit
       const shuffled = pool.slice();
       for (let i = shuffled.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
         [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
       }
-      const picks = shuffled.slice(0, 6);
       const frag = document.createDocumentFragment();
-      picks.forEach((e) => {
+      shuffled.slice(0, 6).forEach((e) => {
         const a = document.createElement('a');
         a.className = 'ecard';
         a.href = '/entry/' + encodeURIComponent(e.s) + '/';
-
         const media = document.createElement('div');
         media.className = 'ecard__media';
         const img = document.createElement('img');
-        img.src = e.im;
-        img.alt = e.t + ' — 魔戒中文维基插图';
-        img.width = 480; img.height = 360;
-        img.loading = 'lazy'; img.decoding = 'async';
+        img.src = e.im; img.alt = e.t + ' — 魔戒中文维基插图';
+        img.width = 480; img.height = 360; img.loading = 'lazy'; img.decoding = 'async';
         media.appendChild(img);
-
         const body = document.createElement('div');
         body.className = 'ecard__body';
         const row = document.createElement('div');
-        row.className = 'row';
-        row.style.gap = '.35rem';
+        row.className = 'row'; row.style.gap = '.35rem';
         const badge = document.createElement('span');
         badge.className = 'tbadge';
         badge.style.setProperty('--tb', e.color);
         badge.textContent = e.label;
         row.appendChild(badge);
-        if (e.er) {
-          const era = document.createElement('span');
-          era.className = 'tbadge';
-          era.textContent = e.er;
-          row.appendChild(era);
-        }
-        const h3 = document.createElement('h3');
-        h3.className = 'ecard__title';
-        h3.textContent = e.t;
-        body.appendChild(row);
-        body.appendChild(h3);
-        if (e.en) {
-          const en = document.createElement('div');
-          en.className = 'ecard__en';
-          en.textContent = e.en;
-          body.appendChild(en);
-        }
-        if (e.su) {
-          const sum = document.createElement('p');
-          sum.className = 'ecard__sum';
-          sum.textContent = e.su;
-          body.appendChild(sum);
-        }
-        a.appendChild(media);
-        a.appendChild(body);
+        if (e.er) { const era = document.createElement('span'); era.className = 'tbadge'; era.textContent = e.er; row.appendChild(era); }
+        const h3 = document.createElement('h3'); h3.className = 'ecard__title'; h3.textContent = e.t;
+        body.appendChild(row); body.appendChild(h3);
+        if (e.en) { const en = document.createElement('div'); en.className = 'ecard__en'; en.textContent = e.en; body.appendChild(en); }
+        if (e.su) { const sum = document.createElement('p'); sum.className = 'ecard__sum'; sum.textContent = e.su; body.appendChild(sum); }
+        a.appendChild(media); a.appendChild(body);
         frag.appendChild(a);
       });
       grid.replaceChildren(frag);
     })();
   </script>
+
   <script is:inline>
+    // breathing-stone hero: the two trees drift at their own pace as you scroll
     (() => {
-      const el = document.getElementById('hero-pool');
-      if (!el) return;
-      let pool = [];
-      try { pool = JSON.parse(el.textContent || '[]'); } catch { return; }
-      if (!pool.length) return;
-      const pick = pool[Math.floor(Math.random() * pool.length)];
-      const img = document.getElementById('hero-img');
-      const frame = document.getElementById('hero-frame');
-      const name = document.getElementById('hero-name');
-      const tag = document.getElementById('hero-type');
-      if (!img || !frame || !name || !tag) return;
-      img.src = pick.im;
-      img.alt = pick.t + '的插图';
-      frame.href = '/entry/' + encodeURIComponent(pick.s) + '/';
-      name.textContent = pick.t;
-      name.href = frame.href;
-      tag.textContent = pick.label;
-      tag.style.setProperty('--tb', pick.color);
+      const left = document.querySelector('.hero-tree--left');
+      const right = document.querySelector('.hero-tree--right');
+      if (!left || !right || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+      let raf = 0;
+      const update = () => {
+        raf = 0;
+        const r = left.parentElement.getBoundingClientRect();
+        const t = Math.max(-1, Math.min(1, (window.innerHeight * 0.5 - (r.top + r.height * 0.5)) / window.innerHeight));
+        left.style.transform = `translateY(${(t * 26).toFixed(1)}px)`;
+        right.style.transform = `translateY(${(t * -18).toFixed(1)}px)`;
+      };
+      const onScroll = () => { if (!raf) raf = requestAnimationFrame(update); };
+      window.addEventListener('scroll', onScroll, { passive: true });
+      update();
     })();
   </script>
 
