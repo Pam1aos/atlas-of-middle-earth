@@ -62,29 +62,41 @@ const fmt = (n: number) => n.toLocaleString('zh-CN');
         <div class="book" id="book">
           <div class="book__halo" aria-hidden="true"></div>
           <div class="book__inner">
-            <div class="book__board book__board--back"></div>
+            <div class="book__board book__board--back">
+              <span class="book__corner book__corner--tl"></span>
+              <span class="book__corner book__corner--tr"></span>
+              <span class="book__corner book__corner--bl"></span>
+              <span class="book__corner book__corner--br"></span>
+              <span class="book__clasp"></span>
+            </div>
             <div class="book__pages">
               <div class="book__leafbook">
                 <div class="book__page book__page--left">
                   <span class="book__rule"></span>
                   <span class="book__rule"></span>
                   <span class="book__rule"></span>
+                  <span class="book__rule book__rule--short"></span>
+                  <span class="book__rune" aria-hidden="true">ᚠ</span>
                 </div>
                 <div class="book__page book__page--right">
                   <span class="book__rule"></span>
                   <span class="book__rule"></span>
+                  <span class="book__rule"></span>
                   <span class="book__rule book__rule--short"></span>
+                </div>
+                <div class="book__flip" aria-hidden="true">
+                  <span class="book__flip-face"></span>
                 </div>
               </div>
               <div class="book__gutter" aria-hidden="true"></div>
+              <span class="book__gilt book__gilt--left" aria-hidden="true"></span>
+              <span class="book__gilt book__gilt--right" aria-hidden="true"></span>
             </div>
-            <div class="book__board book__board--front"></div>
-            <div class="book__sigil" aria-hidden="true">✧</div>
+            <div class="book__sigil" aria-hidden="true">✦</div>
             <div class="book__ribbon" aria-hidden="true"></div>
           </div>
           <div class="book__shadow" aria-hidden="true"></div>
         </div>
-
         <div class="hero-spark" id="hero-spark" aria-hidden="true">
           {Array.from({ length: 22 }).map((_, i) => (
             <span
